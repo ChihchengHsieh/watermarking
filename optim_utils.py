@@ -37,12 +37,11 @@ def transform_img(image, target_size=512):
     image = tform(image)
     return 2.0 * image - 1.0
 
-
-def latents_to_imgs(pipe, latents):
-    x = pipe.decode_image(latents)
-    x = pipe.torch_to_numpy(x)
-    x = pipe.numpy_to_pil(x)
-    return x
+# def latents_to_imgs(pipe, latents):
+#     x = pipe.decode_image(latents)
+#     x = pipe.torch_to_numpy(x)
+#     x = pipe.numpy_to_pil(x)
+#     return x
 
 
 def image_distortion(img1, img2, seed, args):

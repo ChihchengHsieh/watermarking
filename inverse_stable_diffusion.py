@@ -137,6 +137,36 @@ class InversableStableDiffusionPipeline(ModifiedStableDiffusionPipeline):
         reverse_process: True = False,
         **kwargs,
     ):
+        """
+        Run the DDIM denoising process in either forward or reverse direction.
+
+        This function serves two purposes depending on `reverse_process`:
+
+        - If reverse_process=False (default): runs the **forward DDIM generation** process 
+        from noisy latent `x_T` to image-like latent `x_0`.
+
+        - If reverse_process=True: runs the **DDIM inversion** process from `x_0` back to 
+        the initial noise `x_T`, useful for watermark recovery or prompt editing.
+
+        It also supports prompt-to-prompt editing by switching between 
+        `old_text_embeddings` and `new_text_embeddings` at a given step.
+
+        Args:
+            use_old_emb_i (int): Timestep at which to switch from old to new embeddings.
+            text_embeddings (Tensor): Text embedding for generation or inversion.
+            old_text_embeddings (Tensor): Optional embeddings used in prompt-to-prompt.
+            new_text_embeddings (Tensor): Optional new embeddings for prompt switch.
+            latents (Tensor): Starting latent (either noise `x_T` or image latent `x_0`).
+            num_inference_steps (int): Number of DDIM steps.
+            guidance_scale (float): CFG guidance strength (>=1).
+            callback (Callable): Optional callback called every `callback_steps`.
+            callback_steps (int): Frequency to call callback.
+            reverse_process (bool): Whether to run in reverse (inversion) or forward (generation).
+
+        Returns:
+            latents (Tensor): Final latent after DDIM denoising or inversion.
+        """
+
         """Generate image from text prompt and latents"""
         # here `guidance_scale` is defined analog to the guidance weight `w` of equation (2)
         # of the Imagen paper: https://arxiv.org/pdf/2205.11487.pdf . `guidance_scale = 1`
@@ -202,6 +232,7 @@ class InversableStableDiffusionPipeline(ModifiedStableDiffusionPipeline):
             )
             if reverse_process:
                 alpha_prod_t, alpha_prod_t_prev = alpha_prod_t_prev, alpha_prod_t
+                
             latents = backward_ddim(
                 x_t=latents,
                 alpha_t=alpha_prod_t,
@@ -210,15 +241,15 @@ class InversableStableDiffusionPipeline(ModifiedStableDiffusionPipeline):
             )
         return latents
 
-    @torch.inference_mode()
-    def decode_image(self, latents: torch.FloatTensor, **kwargs):
-        scaled_latents = 1 / 0.18215 * latents
-        image = [
-            self.vae.decode(scaled_latents[i : i + 1]).sample
-            for i in range(len(latents))
-        ]
-        image = torch.cat(image, dim=0)
-        return image
+    # @torch.inference_mode()
+    # def decode_image(self, latents: torch.FloatTensor, **kwargs):
+    #     scaled_latents = 1 / 0.18215 * latents
+    #     image = [
+    #         self.vae.decode(scaled_latents[i : i + 1]).sample
+    #         for i in range(len(latents))
+    #     ]
+    #     image = torch.cat(image, dim=0)
+    #     return image
 
     @torch.inference_mode()
     def torch_to_numpy(self, image):

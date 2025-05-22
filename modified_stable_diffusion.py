@@ -245,21 +245,21 @@ class ModifiedStableDiffusionPipeline(StableDiffusionPipeline):
             init_latents=init_latents,
         )
 
-    @torch.inference_mode()
-    def decode_image(self, latents: torch.FloatTensor, **kwargs):
-        scaled_latents = 1 / 0.18215 * latents
-        image = [
-            self.vae.decode(scaled_latents[i : i + 1]).sample
-            for i in range(len(latents))
-        ]
-        image = torch.cat(image, dim=0)
-        return image
+    # @torch.inference_mode()
+    # def decode_image(self, latents: torch.FloatTensor, **kwargs):
+    #     scaled_latents = 1 / 0.18215 * latents
+    #     image = [
+    #         self.vae.decode(scaled_latents[i : i + 1]).sample
+    #         for i in range(len(latents))
+    #     ]
+    #     image = torch.cat(image, dim=0)
+    #     return image
 
-    @torch.inference_mode()
-    def torch_to_numpy(self, image):
-        image = (image / 2 + 0.5).clamp(0, 1)
-        image = image.cpu().permute(0, 2, 3, 1).numpy()
-        return image
+    # @torch.inference_mode()
+    # def torch_to_numpy(self, image):
+    #     image = (image / 2 + 0.5).clamp(0, 1)
+    #     image = image.cpu().permute(0, 2, 3, 1).numpy()
+    #     return image
 
     @torch.inference_mode()
     def get_image_latents(self, image, sample=True, rng_generator=None):
