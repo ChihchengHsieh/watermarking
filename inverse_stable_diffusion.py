@@ -33,7 +33,6 @@ from modified_stable_diffusion import ModifiedStableDiffusionPipeline
 
 ### credit to: https://github.com/cccntu/efficient-prompt-to-prompt
 
-
 def backward_ddim(x_t, alpha_t, alpha_tm1, eps_xt):
     """from noise to image"""
     return (
