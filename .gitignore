@@ -1,1 +1,7 @@
 data/
+*.pth
+watermark_training/
+watermark_dataset/
+watermark_dataset_ring/
+runs*/
+deprecated/
