@@ -2,7 +2,7 @@
 
 We compare our learned watermark detector (**Ours**) against a PSNR-based baseline (**PSNR**) under multiple real-world attack scenarios.  
 Both models are evaluated using **Accuracy** (threshold = 0.5) and **AUROC** (threshold-independent separability).  
-For PSNR, we apply a **sigmoid mapping with a threshold of –4**, which converts PSNR values into probabilities before computing metrics.
+For PSNR, we apply a **threshold of –4**, which converts PSNR values into probabilities before computing metrics.
 
 ### Attack Types Explained
 
