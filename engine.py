@@ -1,4 +1,5 @@
-import tqdm
+import math
+from tqdm import tqdm
 import torch
 from sklearn.metrics import accuracy_score, roc_auc_score
 
@@ -42,13 +43,55 @@ def eval_model(model, loader, crit, device):
         auc = float("nan")
     return acc, auc, (running_loss / len(loader.dataset))
 
-def safe_eval_call(model, loader):
+
+def train_epoch_psnr(model, loader, opt, crit, device):
+    model.train()
+    running_loss = 0.0
+    for X, psnr, y in tqdm(loader, desc="train", leave=False):
+        X = X.to(device)
+        psnr = psnr.to(device)
+        y = y.to(device)
+        opt.zero_grad()
+        out = model(X, psnr)
+        loss = crit(out, y)
+        loss.backward()
+        opt.step()
+        running_loss += loss.item() * X.size(0)
+    return running_loss / len(loader.dataset)
+
+
+def eval_model_psnr(model, loader, crit, device):
+    model.eval()
+    trues, preds, probs = [], [], []
+    running_loss = 0.0
+    with torch.no_grad():
+        for X, psnr, y in tqdm(loader, desc="eval", leave=False):
+            X = X.to(device)
+            y = y.to(device)
+            psnr = psnr.to(device)
+            out = model(X, psnr)
+            loss = crit(out, y)
+            p = torch.softmax(out, dim=1)[:, 1].detach().cpu().numpy()
+            pred = (p > 0.5).astype(int).tolist()
+            probs.extend(p.tolist())
+            preds.extend(pred)
+            trues.extend(y.cpu().numpy().tolist())
+            running_loss += loss.item() * X.size(0)
+
+    acc = accuracy_score(trues, preds)
+    try:
+        auc = roc_auc_score(trues, probs)
+    except Exception:
+        auc = float("nan")
+    return acc, auc, (running_loss / len(loader.dataset))
+
+def safe_eval_call(model, loader, crit, device):
     """
     Call eval_model and handle two possible return signatures:
       (acc, auc) or (acc, auc, loss)
     Returns (acc, auc, loss_or_nan)
     """
-    res = eval_model(model, loader)
+    res = eval_model(model, loader, crit, device)
     if isinstance(res, (list, tuple)):
         if len(res) == 3:
             return float(res[0]), float(res[1]), float(res[2])
@@ -56,3 +99,68 @@ def safe_eval_call(model, loader):
             return float(res[0]), float(res[1]), float("nan")
     # fallback
     return float(res), float("nan"), float("nan")
+
+
+def safe_eval_call_psnr(model, loader, crit, device):
+    """
+    Call eval_model and handle two possible return signatures:
+      (acc, auc) or (acc, auc, loss)
+    Returns (acc, auc, loss_or_nan)
+    """
+    res = eval_model_psnr(model, loader, crit, device)
+    if isinstance(res, (list, tuple)):
+        if len(res) == 3:
+            return float(res[0]), float(res[1]), float(res[2])
+        elif len(res) == 2:
+            return float(res[0]), float(res[1]), float("nan")
+    # fallback
+    return float(res), float("nan"), float("nan")
+
+def psnr_to_prob_sigmoid(psnr, threshold=-4.0, scale=1.0):
+    """Simple sigmoid mapping. threshold -> p=0.5, smaller scale -> steeper curve."""
+    return 1.0 / (1.0 + math.exp(-(psnr - threshold) / scale))
+
+import numpy as np
+
+def psnr_to_prob_sigmoid_ts(psnr, threshold=-4.0, scale=1.0):
+    """
+    Vectorised sigmoid mapping.
+    psnr: numpy array or scalar
+    returns: numpy array or scalar of same shape
+    threshold -> p=0.5
+    smaller scale -> steeper curve
+    """
+    psnr = np.asarray(psnr, dtype=np.float32)
+    return 1.0 / (1.0 + np.exp(-(psnr - threshold) / scale))
+
+def eval_model_psnr_with_psnr_thrs(model, loader, crit, device, psnr_thrs= -4):
+    model.eval()
+    trues, preds, probs, psnr_preds, psnr_probs = [], [], [], [], []
+    running_loss = 0.0
+    with torch.no_grad():
+        for X, psnr, y in tqdm(loader, desc="eval", leave=False):
+            X = X.to(device)
+            y = y.to(device)
+            psnr = psnr.to(device)
+            out = model(X, psnr)
+            loss = crit(out, y)
+            p = torch.softmax(out, dim=1)[:, 1].detach().cpu().numpy()
+            pred = (p > 0.5).astype(int).tolist()
+            probs.extend(p.tolist())
+            preds.extend(pred)
+            trues.extend(y.cpu().numpy().tolist())
+            psnr_prob = psnr_to_prob_sigmoid_ts(psnr.cpu().numpy(), threshold=psnr_thrs)
+            psnr_probs.extend(psnr_prob.tolist())
+            psnr_pred = (psnr_prob > 0.5).astype(int).tolist()
+            psnr_preds.extend(psnr_pred)
+            running_loss += loss.item() * X.size(0)
+
+    acc = accuracy_score(trues, preds)
+    psnr_acc = accuracy_score(trues, psnr_preds)
+    try:
+        auc = roc_auc_score(trues, probs)
+        psnr_auc = roc_auc_score(trues, psnr_probs)
+    except Exception:
+        auc = float("nan")
+        psnr_auc = float("nan")
+    return acc, auc, (running_loss / len(loader.dataset)), psnr_acc, psnr_auc

@@ -11,7 +11,12 @@ class PNSRWarpper(nn.Module):
         self.fc_in_features = base_model.fc.in_features
         # modify the fc layer to accept additional pnsr input
         self.base_model.fc = nn.Identity()
-        self.fc = nn.Linear(self.fc_in_features + 1, 2)  ##
+        # instead of one layer, make it 2
+        self.fc = nn.Sequential(
+            nn.Linear(self.fc_in_features + 1, 64),
+            nn.ReLU(),
+            nn.Linear(64, 2)
+        )
 
     def forward(self, x, pnsr):
         x = self.base_model(x)  ##
@@ -21,7 +26,7 @@ class PNSRWarpper(nn.Module):
 
 
 # ---------------- small model helper ----------------
-def make_model(in_channels, include_pnsr=False):
+def make_model(in_channels, include_psnr=False):
     model = models.resnet18(pretrained=False)
     # adapt first conv
     model.conv1 = nn.Conv2d(
@@ -32,9 +37,11 @@ def make_model(in_channels, include_pnsr=False):
         padding=model.conv1.padding,
         bias=(model.conv1.bias is not None),
     )
-    if include_pnsr:
+    if include_psnr:
+        print("Using PNSR wrapper for the model.")
         model = PNSRWarpper(model)
     else:
+        print("Using standard model without PNSR.")
         model.fc = nn.Linear(model.fc.in_features, 2)
     return model
 
@@ -43,11 +50,24 @@ def load_checkpoint(model, cp_path, device, opt=None):
     if os.path.exists(cp_path):
         print(f"Loading checkpoint: {cp_path}")
         ckpt = torch.load(cp_path, map_location=device)
+
+
+        # ------------ Comment out this part when loading new pattern ------------
+        # remove dict start with fc. for now.
+        # for k in list(ckpt['model_state_dict'].keys()):
+        #     if k.startswith("fc.") or k.startswith("conv1."):
+        #         ckpt['model_state_dict'].pop(k)
+
+        # ckpt.pop('optimizer_state_dict', None)
+
+        # print("Remaining keys in checkpoint:")
+        # print(ckpt['model_state_dict'].keys())
+
         # two possible styles:
         # 1) legacy single state_dict saved by torch.save(model.state_dict())
         # 2) full checkpoint dict saved with model_state_dict, optimizer_state_dict, epoch, maybe scheduler
         if isinstance(ckpt, dict) and "model_state_dict" in ckpt:
-            model.load_state_dict(ckpt["model_state_dict"])
+            model.load_state_dict(ckpt["model_state_dict"], strict=True)
             if "optimizer_state_dict" in ckpt:
                 try:
                     opt.load_state_dict(ckpt["optimizer_state_dict"])
