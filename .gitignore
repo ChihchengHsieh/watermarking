@@ -5,3 +5,6 @@ watermark_dataset/
 watermark_dataset_ring/
 runs*/
 deprecated/
+verifier_dataset_*/
+fid_outputs/
+old_datasets/

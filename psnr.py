@@ -91,6 +91,7 @@ def eval_watermark(
     # metric
     if "l1" in w_measurement:
         metric = torch.abs(latent_dom[wm_mask] - target_dom[wm_mask]).mean().item()
+        
     elif "psnr" in w_measurement:
         # try user's compute_psnr first (signature: (pred, target, mask))
         if "compute_psnr" in globals() and callable(globals()["compute_psnr"]):
@@ -403,6 +404,21 @@ def batch_detector(x_batch, gt_patch, watermarking_mask):
     return torch.tensor(results, device=x_batch.device)
 
 
+def get_batch_results(x_batch, gt_patch, watermarking_mask):
+    results = []
+    for i in range(x_batch.shape[0]):
+        res = detect_watermark_ncx2_from_latent(
+            latent_tensor=x_batch[i : i + 1],
+            gt_patch=gt_patch,
+            watermarking_mask=watermarking_mask,
+            k_in_freq_domain=True,
+            alpha=0.01,
+            verbose=False,
+        )
+        results.append(res)
+    return results
+
+
 from tqdm import tqdm
 
 
@@ -433,7 +449,7 @@ def eval_watermark_detector_pnsr(detector, loader, device):
             y = y.to(device)
             out = detector(X)
             pred = (out > 0.5).cpu().numpy().astype(int).tolist()
-            # probs.extend(out.cpu().numpy().tolist())
+            probs.extend(out.cpu().numpy().tolist())
             probs.extend(pred)
             preds.extend(pred)
             trues.extend(y.cpu().numpy().tolist())
@@ -443,3 +459,15 @@ def eval_watermark_detector_pnsr(detector, loader, device):
     except Exception:
         auc = float("nan")
     return acc, auc
+
+
+def eval_watermark_results(detector, loader, device):
+    trues, outs = [], []
+    with torch.no_grad():
+        for X, y in tqdm(loader, desc="eval", leave=False):
+            X = X.to(device)
+            y = y.to(device)
+            out = detector(X)
+            outs.extend(out)
+            trues.extend(y.cpu().numpy().tolist())
+    return outs, trues

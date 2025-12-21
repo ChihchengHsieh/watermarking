@@ -23,10 +23,33 @@ class PNSRWarpper(nn.Module):
         x = torch.cat([x, pnsr.unsqueeze(1)], dim=1)
         x = self.fc(x)
         return x
+    
+class PNSRL1Warpper(nn.Module):
+    def __init__(self, base_model):
+        super(PNSRL1Warpper, self).__init__()
+        self.base_model = base_model
+        # grab the original in_features of the fc layer
+        self.fc_in_features = base_model.fc.in_features
+        # modify the fc layer to accept additional pnsr input
+        self.base_model.fc = nn.Identity()
+        # instead of one layer, make it 2
+        self.fc = nn.Sequential(
+            nn.Linear(self.fc_in_features + 2, 64),
+            nn.ReLU(),
+            nn.Linear(64, 2)
+        )
+
+    def forward(self, x, pnsr, l1):
+        x = self.base_model(x)  ##
+        x = torch.cat([x, pnsr.unsqueeze(1), l1.unsqueeze(1)], dim=1)
+        x = self.fc(x)
+        return x
+
+
 
 
 # ---------------- small model helper ----------------
-def make_model(in_channels, include_psnr=False):
+def make_model(in_channels, include_psnr_l1=False):
     model = models.resnet18(pretrained=False)
     # adapt first conv
     model.conv1 = nn.Conv2d(
@@ -37,9 +60,9 @@ def make_model(in_channels, include_psnr=False):
         padding=model.conv1.padding,
         bias=(model.conv1.bias is not None),
     )
-    if include_psnr:
-        print("Using PNSR wrapper for the model.")
-        model = PNSRWarpper(model)
+    if include_psnr_l1:
+        print("Using PNSRL1 wrapper for the model.")
+        model = PNSRL1Warpper(model)
     else:
         print("Using standard model without PNSR.")
         model.fc = nn.Linear(model.fc.in_features, 2)
@@ -67,7 +90,7 @@ def load_checkpoint(model, cp_path, device, opt=None):
         # 1) legacy single state_dict saved by torch.save(model.state_dict())
         # 2) full checkpoint dict saved with model_state_dict, optimizer_state_dict, epoch, maybe scheduler
         if isinstance(ckpt, dict) and "model_state_dict" in ckpt:
-            model.load_state_dict(ckpt["model_state_dict"], strict=True)
+            model.load_state_dict(ckpt["model_state_dict"], strict=False)
             if "optimizer_state_dict" in ckpt:
                 try:
                     opt.load_state_dict(ckpt["optimizer_state_dict"])

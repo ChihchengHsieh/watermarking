@@ -5,6 +5,36 @@ import numpy as np
 import math
 import copy
 
+
+def inject_watermark(init_latents_w, watermarking_mask, gt_patch, w_injection: str):
+    """
+    Inject the watermark into the latents.
+    Parameters:
+        - init_latents_w: The initial latents with watermarking.
+        - watermarking_mask: The mask indicating where to inject the watermark. (in the Fourier domain)
+        - gt_patch: The watermark pattern to be injected.
+        - w_injection: The method of watermark injection (e.g., "complex", "seed").
+    Returns:
+        - init_latents_w: The latents with the watermark injected.
+    """
+
+    # Perform FFT on the latents
+    init_latents_w_fft = torch.fft.fftshift(torch.fft.fft2(init_latents_w), dim=(-1, -2))
+
+    # Inject the watermark into the latents in FFT domain
+    if w_injection == 'complex':
+        init_latents_w_fft[watermarking_mask] = gt_patch[watermarking_mask].clone()
+    elif w_injection == 'seed':
+        init_latents_w[watermarking_mask] = gt_patch[watermarking_mask].clone()
+        return init_latents_w
+    else:
+        NotImplementedError(f'w_injection: {w_injection}')
+
+    # Perform inverse FFT to get the latents with watermark
+    init_latents_w = torch.fft.ifft2(torch.fft.ifftshift(init_latents_w_fft, dim=(-1, -2))).real
+
+    return init_latents_w
+
 def _draw_segment(canvas, x0, y0, x1, y1, thickness_px):
     """
     Mutates canvas[H,W] in-place (bool OR).

@@ -3,6 +3,7 @@ from tqdm import tqdm
 import torch
 from sklearn.metrics import accuracy_score, roc_auc_score
 
+
 # ---------------- training / eval loops ----------------
 def train_epoch(model, loader, opt, crit, device):
     model.train()
@@ -60,6 +61,45 @@ def train_epoch_psnr(model, loader, opt, crit, device):
     return running_loss / len(loader.dataset)
 
 
+def train_epoch_psnr_l1(model, loader, opt, crit, device):
+    model.train()
+    running_loss = 0.0
+    for X, psnr, l1, y in tqdm(loader, desc="train", leave=False):
+        X = X.to(device)
+        psnr = psnr.to(device)
+        l1 = l1.to(device)
+        y = y.to(device)
+        opt.zero_grad()
+        out = model(X, psnr, l1)
+        loss = crit(out, y)
+        loss.backward()
+        opt.step()
+        running_loss += loss.item() * X.size(0)
+    return running_loss / len(loader.dataset)
+
+
+def eval_model_psnr_l1(model, loader, crit, device):
+    model.eval()
+    gts, probs, psnrs, l1s = [], [], [], []
+    running_loss = 0.0
+    with torch.no_grad():
+        for X, psnr, l1, y in tqdm(loader, desc="eval", leave=False):
+            X = X.to(device)
+            y = y.to(device)
+            psnr = psnr.to(device)
+            l1 = l1.to(device)
+            out = model(X, psnr, l1)
+            loss = crit(out, y)
+            p = torch.softmax(out, dim=1)[:, 1].detach().cpu().numpy()
+            probs.extend(p.tolist())
+            psnrs.extend(psnr.cpu().numpy().tolist())
+            l1s.extend(l1.cpu().numpy().tolist())
+            gts.extend(y.cpu().numpy().tolist())
+            running_loss += loss.item() * X.size(0)
+
+    return probs, gts, (running_loss / len(loader.dataset)), psnrs, l1s
+
+
 def eval_model_psnr(model, loader, crit, device):
     model.eval()
     trues, preds, probs = [], [], []
@@ -84,6 +124,7 @@ def eval_model_psnr(model, loader, crit, device):
     except Exception:
         auc = float("nan")
     return acc, auc, (running_loss / len(loader.dataset))
+
 
 def safe_eval_call(model, loader, crit, device):
     """
@@ -116,11 +157,29 @@ def safe_eval_call_psnr(model, loader, crit, device):
     # fallback
     return float(res), float("nan"), float("nan")
 
+
+def safe_eval_call_psnr_l1(model, loader, crit, device):
+    """
+    Call eval_model and handle two possible return signatures:
+      (acc, auc) or (acc, auc, loss)
+    Returns (acc, auc, loss_or_nan)
+    """
+    probs, gts, loss, _, _ = eval_model_psnr_l1(model, loader, crit, device)
+    acc = accuracy_score(gts, [int(p > 0.5) for p in probs])
+    try:
+        auc = roc_auc_score(gts, probs)
+    except Exception:
+        auc = float("nan")
+    return acc, auc, loss
+
+
 def psnr_to_prob_sigmoid(psnr, threshold=-4.0, scale=1.0):
     """Simple sigmoid mapping. threshold -> p=0.5, smaller scale -> steeper curve."""
     return 1.0 / (1.0 + math.exp(-(psnr - threshold) / scale))
 
+
 import numpy as np
+
 
 def psnr_to_prob_sigmoid_ts(psnr, threshold=-4.0, scale=1.0):
     """
@@ -133,7 +192,8 @@ def psnr_to_prob_sigmoid_ts(psnr, threshold=-4.0, scale=1.0):
     psnr = np.asarray(psnr, dtype=np.float32)
     return 1.0 / (1.0 + np.exp(-(psnr - threshold) / scale))
 
-def eval_model_psnr_with_psnr_thrs(model, loader, crit, device, psnr_thrs= -4):
+
+def eval_model_psnr_with_psnr_thrs(model, loader, crit, device, psnr_thrs=-4):
     model.eval()
     trues, preds, probs, psnr_preds, psnr_probs = [], [], [], [], []
     running_loss = 0.0

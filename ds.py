@@ -110,7 +110,7 @@ class RandomGaussianNoise:
         return img
 
 
-def make_train_image_augmentations(IMAGE_SIZE):
+def make_train_image_augmentations_deprecated(IMAGE_SIZE):
     # Compose PIL-based augmentations (randomly applied)
     aug_list = []
     # random rotation small
@@ -161,12 +161,14 @@ def make_train_image_augmentations(IMAGE_SIZE):
     final = transforms.Compose([transforms.Resize((IMAGE_SIZE, IMAGE_SIZE)), *aug_list])
     return final
 
+
 def get_test_aug(image_size):
     return transforms.Compose(
         [
             transforms.Resize(image_size),
         ]
     )
+
 
 def _compute_psnr_masked(pred, target, mask, eps=1e-8):
     """
@@ -184,6 +186,7 @@ def _compute_psnr_masked(pred, target, mask, eps=1e-8):
         max_val = torch.tensor(1.0, device=t.device)
     psnr = 10.0 * torch.log10((max_val**2) / mse)
     return psnr.item()
+
 
 # ----------------- assume helpers are available from your notebook -----------------
 def transform_img(image, target_size=512):
@@ -249,7 +252,10 @@ def eval_watermark(
         )
     return metric
 
+
 import math
+
+
 def psnr_to_prob_sigmoid(psnr, threshold=-4.0, scale=1.0):
     """Simple sigmoid mapping. threshold -> p=0.5, smaller scale -> steeper curve."""
     return 1.0 / (1.0 + math.exp(-(psnr - threshold) / scale))
@@ -277,9 +283,9 @@ class WatermarkOnTheFlyDataset(Dataset):
         image_aug=None,
         image_aug_prob=0.5,
         image_size=512,
-        include_psnr=False,
+        include_psnr_l1=False,
         include_mask_patch=False,
-        psnr_return_prob=True,
+        psnr_return_prob=False,
     ):
         assert len(file_paths) == len(labels)
         self.file_paths = file_paths
@@ -292,16 +298,16 @@ class WatermarkOnTheFlyDataset(Dataset):
         self.image_aug = image_aug
         self.image_aug_prob = image_aug_prob
         self.test_aug = get_test_aug(image_size)
-        self.watermarking_mask = watermarking_mask 
+        self.watermarking_mask = watermarking_mask
         self.gt_patch = gt_patch
-        self.include_psnr = include_psnr
+        self.include_psnr_l1 = include_psnr_l1
         self.include_mask_patch = include_mask_patch
         self.return_reversed_latents = False  # default behavior
         self.psnr_return_prob = psnr_return_prob
 
     def __len__(self):
         return len(self.file_paths)
-    
+
     def _load_pil(self, fp):
         # accept PIL.Image, numpy array, or path
         if isinstance(fp, Image.Image):
@@ -313,7 +319,7 @@ class WatermarkOnTheFlyDataset(Dataset):
         p = Path(fp)
         img = Image.open(p).convert("RGB")
         return img
-    
+
     def set_return_reversed_latents(self, return_reversed_latents: bool):
         self.return_reversed_latents = return_reversed_latents
 
@@ -363,8 +369,17 @@ class WatermarkOnTheFlyDataset(Dataset):
                 w_measurement="psnr_complex",
             )
 
+            l1_metric = eval_watermark(
+                reversed_latents,  # single sample
+                self.watermarking_mask,
+                self.gt_patch,
+                w_measurement="l1_complex",
+            )
+
             if self.psnr_return_prob:
-                psnr_metric = psnr_to_prob_sigmoid(psnr_metric, threshold=-4.0, scale=1.0)
+                psnr_metric = psnr_to_prob_sigmoid(
+                    psnr_metric, threshold=-4.0, scale=1.0
+                )
 
             # Keep complex-safe: cast to float32 after splitting real/imag
             # Compute FFT (complex)
@@ -380,15 +395,27 @@ class WatermarkOnTheFlyDataset(Dataset):
 
         if self.include_mask_patch:
             # concatenate watermarking mask and gt_patch as float32 channels
-            mask_ch = self.watermarking_mask.to(dtype=torch.float32).squeeze(0)  # (1,H,W)
+            mask_ch = self.watermarking_mask.to(dtype=torch.float32).squeeze(
+                0
+            )  # (1,H,W)
             gt_patch_ch = self.gt_patch.to(dtype=torch.float32).squeeze(0)  # (1,H,W)
             fft_ch = torch.cat([fft_ch, mask_ch, gt_patch_ch], dim=0)  # (2*C+2, H, W)
 
-            if self.include_psnr:
-                return fft_ch, torch.tensor(psnr_metric, dtype=torch.float32), torch.tensor(label, dtype=torch.long)
+            if self.include_psnr_l1:
+                return (
+                    fft_ch,
+                    torch.tensor(psnr_metric, dtype=torch.float32),
+                    torch.tensor(l1_metric, dtype=torch.float32),
+                    torch.tensor(label, dtype=torch.long),
+                )
             return fft_ch, torch.tensor(label, dtype=torch.long)
 
-        if self.include_psnr:
-            return fft_ch, torch.tensor(psnr_metric, dtype=torch.float32), torch.tensor(label, dtype=torch.long)
-        
+        if self.include_psnr_l1:
+            return (
+                fft_ch,
+                torch.tensor(psnr_metric, dtype=torch.float32),
+                torch.tensor(l1_metric, dtype=torch.float32),
+                torch.tensor(label, dtype=torch.long),
+            )
+
         return fft_ch, torch.tensor(label, dtype=torch.long)
