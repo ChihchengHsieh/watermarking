@@ -27,7 +27,7 @@ class PNSRWarpper(nn.Module):
 class PNSRL1Warpper(nn.Module):
     def __init__(self, base_model):
         super(PNSRL1Warpper, self).__init__()
-        self.base_model = base_model
+        self.base_model = base_model # resnet18
         # grab the original in_features of the fc layer
         self.fc_in_features = base_model.fc.in_features
         # modify the fc layer to accept additional pnsr input
