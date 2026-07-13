@@ -1,0 +1,627 @@
+#0621
+
+            SCREEN-SHOOTING RESILIENT WATERMARKING BASED ON LONG-RANGE
+                     MODELING AND HIGH-FREQUENCY ENHANCEMENT
+
+                     Jun-Zhuo Zou1 , Nan-Run Zhou2 , Z. Jane Wang3 , Zhihua Xia4 , Xiangui Kang1 ,∗
+
+                           1 School of Computer Science and Engineering, Sun Yat-Sen University,
+          2 School of Electronic and Electrical Engineering, Shanghai University of Engineering Science,
+                       3 Electrical and Computer Engineering Dept, University of British Columbia,
+                                               4 College of Cyber Security, Jinan University
+
+
+
+                               ABSTRACT                                         leading to distortions such as geometric deformations, light-
+                                                                                ing variations, blurring, and moiré patterns [3, 4, 5]. These
+   Screen-shooting has become a major threat to image wa-
+                                                                                degradations destroy the structural and frequency characteris-
+   termarking in the era of mobile devices. Most existing ap-
+                                                                                tics of images, making watermark extraction unreliable [6, 7].
+   proaches focus on increasingly sophisticated distortion sim-
+   ulation during training, yet still adopt short-range network                      Traditional screen-shooting resilient watermarking algo-
+   backbones. Such local-scale feature fusion is insufficient                   rithms typically rely on qualitative analysis of distortion dur-
+   to model cross-region dependencies under nonlinear screen-                   ing the shooting process and adopt fixed embedding strategies
+   shooting degradations, leading to unreliable decoding. In                    to enhance robustness [8, 9]. While these methods offer sim-
+   this paper, we propose WNet, an end-to-end watermark-                        plicity and computational efficiency, they lack adaptability to
+   ing framework based on a cascaded dual-UNet architecture.                    uncontrolled shooting conditions, leading to frequent failures
+   WNet establishes long-range dependencies to effectively cap-                 in watermark recovery.
+   ture global distortion patterns and enhance resilience against                    Deep learning-based watermarking algorithms allow the
+   complex real-world degradations. To mitigate the attenua-                    network to dynamically adapt to various distortions and ef-
+   tion of fine details introduced by long-range modeling, we                   fectively exploit the fine-grained features and spatial struc-
+   design a Laplacian-pyramid-based high-frequency enhance-                     tures of the host image for improving model performance
+   ment channel attention module to explicitly strengthen high-                 [10, 11, 12, 13]. Tancik et al. proposed an end-to-end print-
+   frequency structures. In addition, a texture edge guided loss                shooting resilient watermarking neural network called Ste-
+   is constructed to align watermark information with invisible                 gaStamp [10]. Based on StegaStamp, Guo et al. integrated
+   texture-rich regions. Experimental results demonstrate that                  a series of mathematical operations in a distortion network to
+   the proposed scheme significantly outperforms existing state-                simulate multiple shooting methods [11]. By training with
+   of-the-art methods. On average, our method achieves 1.28%                    style transfer techniques, Gao et al. developed a realistic and
+   higher bit accuracy and a 0.52 dB gain in terms of PSNR                      credible comprehensive distortion layer [12]. Fang et al. pro-
+   compared with DoBMark.                                                       posed a distortion layer dubbed PIMoG, which can simulate
+                                                                                common screen-shooting distortions in a differentiable way
+      Index Terms— Screen-shooting, Watermarking, Long-
+                                                                                [13]. Wengrowski et al. introduced a real-time system that
+   range modeling, High-frequency enhancement, Texture edge
+                                                                                embeds and recovers hidden information in screen-displayed
+   guided loss
+                                                                                videos captured by handheld cameras [14]. Although these
+                                                                                methods enhance robustness to some extent, they primarily
+                         1. INTRODUCTION                                        rely on designing distortion layers and employing short-range
+   Information security issues have received increasing attention               modeling architectures, such as UNet, for feature extraction
+   with the development of digital technology. Digital water-                   and reconstruction. These structures exhibit limitations when
+   marking technology is one of the effective solutions to these                it comes to capturing cross-region dependencies and handling
+   issues and has been widely applied in copyright protection                   large-scale geometric and nonlinear distortions. Specifically,
+   and information tracking [1, 2]. However, screen-shooting                    the UNet encoder can fuse features across different levels, but
+   has become an increasingly prevalent method of image theft,                  this fusion remains limited to local scales, which causes the
+                                                                                degradation of watermark information in large-scale screen-
+        ∗ is the corresponding author. This work was supported by NSFC (Grant
+                                                                                shooting distortion scenarios.
+   No. T2541025), Natural Science Foundation of Guangdong Province (No.
+   2025A1515012740), and Guangdong Key Laboratory of Information Secu-               To address the above concerns, we propose a long-range
+   rity Technology (No. 2023B1212060026).                                       WNet-based framework that incorporates a Laplacian pyra-
+#0621
+                Encoder in Sec 2.1                                                                                                                            UBp, v                               If p=1 F KU
+                                                                                                                                                                                                           p ,v          DBp, v
+                                            Watermark preprocessing                                                                                                                                                                                             FpKD
+                                                                                                                                                                                                                                                                   ,v
+                                                                                                                                                                  FpU,v−1                            C                        FpD,v−1                   C
+                                                                                                                                               Host Image
+                                                                                                                                                                                                             F pU, v
+                  00111…0101
+                                                                                                                                                                  FvK                                                         FvK                               F pD, v
+                  Input Message                                                                                                                                                                                                              If p=2
+
+
+                                                                                                                                     U
+                                                                                                                                                              High-Frequency Enhancement Channel Attention Module
+                                                                                                                                    F2,4
+                                      D
+                                                                                       KU
+                                                                                     F1,4                                                                     (HECAM)                    FC+Softmax
+                                    F1,0                                                                                                                                      Z
+                                             DB1, 1                    UB1, 4             C                DB2, 1             UB2, 4                          in Sec 2.4
+                                                           F1,1KD                       U
+                                                                                      F1,4         D
+                                                                                                  F2,0
+                                                                                                                                                                                SE weight module
+                                                   F1,1D                        U
+                                                                              F1,3
+
+
+
+
+                                             ...
+
+
+
+
+                                                                        ...
+
+
+
+
+                                                                                                           ...
+
+
+
+
+                                                                                                                              ...
+                       Host Image
+                                                                                                                                                                                 PLR
+                                                                                                                                                                   G1                              TE
+                                             DB1, 4                    UB1, 1                              DB2, 4             UB2, 1
+                                              D                                 U
+                                            F1,4                              F1,0                                                            Watermarked
+                                                                                                                                                Image
+                                                                                                                                                                         G1                                                                    TE
+                                                      Le: LDC-based MSE Loss in Eqn (4)
+                                                      Ls: SSIM Loss in Eqn (5)                                                                                                                R1                       Rs
+
+
+
+
+                                                                                                                                                                       ...
+
+                                                                                                                                                                               ...
+                Ld: MSE Loss in Eqn (6)                                                                                                    Distortion Layer
+
+
+
+
+                                                                                                                                                                                                     ...
+                     Decoder in Sec 2.3                                                                                                                                                                                FFT
+                                                                                                                                                                        Gn
+                                  Reshape                                                                                                    Affine                                      Rn                            HPF
+                  00111…0101                                                                                                                                                                                           IFFT
+                    Decoded
+                                                                                                                                                                        Gn+1
+                    Message                                                                                                                                                       Progressive Laplacian Refinement (PLR)
+                     Convtranspose2d + Relu,                        ConvBlock (Conv2d-                         Conv2d + Relu,          Element-wise           Element-wise           H   High-pass       F   Fast Fourier
+                                                                                                                                                                                                                                        I
+                                                                                                                                                                                                                                              Inverse fast
+                                                                                                                                                                                                                                        F
+                            stride = 2                               BatchNorm-Relu)                              stride = 2              product               Addition             P
+                                                                                                                                                                                           filter
+                                                                                                                                                                                                         F
+                                                                                                                                                                                                              transform                 F   Fourier transform
+                                                                                                                                                                                     F                   T
+                                                                                                                                                                                                                                        T
+                              High-frequency enhancement channel                                                                       Channel-wise           Element-wise
+                                                                                             Fi          i-th input feature          C
+                                  attention module (HECAM)                                                                             concatenation           Subtraction               Linear interpolation                    Gaussian down-sampling
+
+
+
+
+                               Fig. 1. Overview of the proposed screen-shooting resilient watermarking framework.
+
+   mid attention mechanism and a texture edge guided loss to                                                                                            stage consists of a series of down-sampling blocks DB p,v and
+   improve both robustness and invisibility in screen-shooting                                                                                          up-sampling blocks UB p,v , where the stage index p ∈ {1, 2}
+   scenarios. Our contributions are as follows:                                                                                                         and the block index v ∈ {1, 2, 3, 4}. In particular, the DB
+       1) We propose a cascaded dual-UNet architecture, WNet,                                                                                           blocks in Stage-1 do not incorporate skip connections as in-
+   which establishes long-range dependencies through a two-                                                                                             puts, and the UB blocks in Stage-2 do not generate skip fea-
+   stage UNet pipeline. This model first extracts multi-scale                                                                                           tures, since they are located at the start and end of the net-
+   host priors and then integrates the watermark with these pri-                                                                                        work path, respectively. In the first stage, the network takes
+   ors, while dense cross-stage skip connections promote cross-                                                                                         Io as input. DB1,v performs convolution followed by down-
+   region feature propagation for more robust embedding.                                                                                                sampling, generating a down-sampled feature map FD          1,v for
+       2) We design a high-frequency enhancement channel                                                                                                                                                KD
+                                                                                                                                                        the next block DB1,v+1 and a skip feature F1,v . Subsequently,
+   attention module, HECAM. By decomposing multi-scale                                                                                                  UB1,v performs feature reconstruction. At the beginning of
+   features with a Laplacian pyramid and re-weighting high-                                                                                             UB p,v , HECAM is integrated. It decomposes the input fea-
+   frequency responses via channel attention, HECAM pre-                                                                                                tures using a Laplacian pyramid, extracts multi-scale high-
+   serves local structural details during feature fusion and pro-                                                                                       frequency components, and assigns higher weights to these
+   vides stable carriers for watermark embedding.                                                                                                       texture-rich features through a channel attention mechanism.
+       3) We introduce a texture edge guided mean squared er-                                                                                           The enhanced feature is up-sampled and concatenated with
+   ror loss to guide the distribution of watermark information                                                                                          the skip features. In this stage, UB1,v output a skip feature
+   toward the texture edge region of the image, improving the                                                                                           map FKU 1,v before the concatenation operation. The final output
+   invisibility of the watermarked images.                                                                                                              of UB1,4 is denoted as FU    1,4 , which contains the host image’s
+                     2. PROPOSED MODEL                                                                                                                  multi-scale prior information. The second stage is responsi-
+   The proposed watermarking framework includes three parts:                                                                                            ble for embedding the watermark message M. M is first re-
+   encoder, decoder, and distortion layer, as shown in Fig. 1.                                                                                          shaped and up-sampled through a small network to match the
+   2.1. Encoder                                                                                                                                         spatial resolution of FU  1,4 . This processed watermark is then
+                                                                                                                                                                                U
+                                                                                                                                                        concatenated with F1,4 along the channel dimension. The
+   To capture cross-region dependencies that are essential for re-
+   sisting large-scale screen-shooting distortions, we propose a                                                                                        combined tensor FD    2,0 serves as the input to the first down-
+   cascaded dual-UNet encoder, termed WNet. The two-stage                                                                                               sampling block DB2,1 . The down-sampling and up-sampling
+   architecture enables long-range feature propagation, allowing                                                                                        paths in Stage-2 operate identically to Stage-1 in terms of
+   the network to integrate global context for robust watermark                                                                                         structure and skip connection mode. The final output of this
+   embedding. It processes the host image Io in two sequen-                                                                                             stage, i.e., FU
+                                                                                                                                                                      2,4 is processed through a final convolution layer
+   tial stages. The first stage extracts multi-scale visual fea-                                                                                        and added to Io to generate the watermarked image Ie .
+   tures, and the second stage integrates the watermark informa-
+   tion with these features for robust embedding. The network                                                                                           2.2. Distortion layer
+   utilizes dense skip connections to ensure comprehensive fu-                                                                                          To verify the performance gain brought by the network frame-
+   sion of contextual information across and within stages. Each                                                                                        work, the same distortion layer as in PIMoG [13] is adopted to
+#0621
+   simulate real-world capture distortions. In addition, six com-         tests, we set σ to 0.1 to suppress low-frequency noise while
+   mon distortions are introduced to enhance the model’s robust-          preserving the high-frequency structural information of the
+   ness in electronic transmission scenarios. These distortions           feature maps.
+   include resizing, JPEG compression, Gaussian blur, salt-and-            Algorithm 1: Proposed HECAM
+   pepper noise, dropout, and cropout.
+                                                                             Input: Input feature map X, i.e., G1 , the number of
+   2.3. Decoder
+                                                                                     channels C
+   In the decoding process, four-point perspective transforma-             1 The input X is passed through PLR to extract
+   tion is employed to achieve precise correction by rectifying               fine-grained high-frequency feature TE:
+   the quadrilateral boundaries or projection relationships of the         2 Gi+1 = downsample (Gi ), i ∈ {1, 2, . . . , n};
+   captured image. Each down-sampling operation doubles the                          n
+   number of feature channels to compensate for resolution loss.           3   Rs = ∑ (Gi − upsample (Gi+1 ));
+                                                                                    i=1
+   HECAM improves watermark extraction by assigning higher
+                                                                           4 for c=0 to C-1 do
+   weights to feature maps containing texture-rich regions. The
+                                                                           5     FF = FFT2D (Rs [c, : , :]);
+   downstream convolutions reduce the feature map to a single
+                                                                           6     (H,W ) = SpatialSize (FF );
+   channel, and the final output is reshaped to ensure dimen-
+                                                                           7     for u=0 to H-1, v=0 to W -1 do
+   sional alignment with the input watermark message.
+                                                                           8         FT (u, v) = FF (u, v) ⊙ HP (u, v) ;
+   2.4. HECAM                                                              9     end
+   Screen-shooting distortions often attenuate high-frequency             10     TE [c, :, :] = IFFT2D (FT ) .real;
+   details of the watermarked image, which are critical for wa-           11 end
+   termark embedding. To preserve these details in long-range             12 Extract channel attention weights:
+   modeling, we assign higher weights to high-frequency fea-              13 Z = SE(TE); where SE (·) denotes the
+   tures via HECAM. This ensures that texture-rich regions,                  squeeze-and-excitation network in [15].
+   which are more resilient to geometric and photometric dis-             14 Apply Softmax function and fully connected layer:
+   tortions, retain watermark information. Inspired by Hu et al.              F = Softmax (FC (Z)) ⊙ TE + X.
+   [15] and Zhang et al. [16], a high-frequency enhancement               15 return F
+   channel attention module, i.e., HECAM, is designed to cap-
+   ture the high-frequency features of the input. At the core of          2.5. Loss function
+   HECAM lies the progressive Laplacian refinement (PLR),                 To generate watermarked image Ie with high visual quality
+   which refines the traditional Laplacian decomposition into a           and decoded message Md with high accuracy, the overall op-
+   multi-scale, frequency-aware representation. Unlike manual             timization object is:
+   filters or global frequency transformations, PLR can progres-
+   sively separate high-frequency components while preserving                                 Lt = Le + λ1 Ls + λ2 Ld                  (3)
+   spatial correlations. By leveraging the hierarchical structure
+   of the Laplacian pyramid, the network can focus on high-               where λ1 and λ2 are the weight coefficients to balance the
+   frequency components, enhancing its ability to emphasize               contributions of the respective loss components. Through
+   fine-grained texture information. The structure of HECAM               multiple comparative experiments, they are determined to be
+   is shown in Fig. 1, and the detailed calculation process is            0.1 and 4, respectively.
+   summarized in Algorithm 1. Compared to hand-crafted DCT
+                                                                          2.5.1. Encoding loss Le &Ls
+   and gradient priors, the pyramid-based structure offers better
+   alignment with convolutional feature hierarchies and provides          We formulate Le as the sum of a reconstruction term and a tex-
+   both localization and frequency discrimination. A high-pass            ture edge guidance term. The reconstruction term constrains
+   filter is employed to further suppress low-frequency noise             the distortion between Io and Ie . The guidance term aligns the
+   during the progressive refinement process of the Laplacian             embedding watermark residual Ir with the texture edge mask
+   pyramid, and to highlight the high-frequency texture features.         extracted from Io by the pre-trained lightweight dense CNN
+   The filter HP (·) is formulated as:                                    (LDC) [17], thereby encouraging watermark modifications to
+                                                                          concentrate on texture edge regions. Here, Ir = Ie − Io . Le is
+                                                2
+                    HP (u, v) = 1 − exp − D(u,v)               (1)        denoted as:
+                                            2σ 2                                    Le = MSE (Io , Ie ) + MSE (τ · LDC (Io ) , Ir )   (4)
+                               q
+                  D (u, v) =    (u − u0 )2 + (v − v0 )2            (2)    where τ controls the strength of the texture edge mask and
+                                                                          defaults to 1. Moreover, structural similarity (SSIM) is ap-
+   where D (u, v) represents the Euclidean distance from        (u, v)   plied to measure the distortion of the watermarked image at
+   to the spectrum center (u0 , v0 ), with (u0 , v0 ) = H2 , W2 for an    the perceptual level in terms of brightness, contrast, and struc-
+   H × W spectrum. σ controls the cutoff frequency and de-                ture. The structural loss Ls can be defined as:
+   termines the sharpness of the filter transition. After multiple
+                                                                                               Ls = 1 − SSIM (Io , Ie )                 (5)
+#0621
+   2.5.2. Decoding loss Ld                                              robustness of some schemes improves when the shooting dis-
+   The decoder aims to minimize the difference between Md and           tance increases from 40 cm to 50 cm. A longer distance re-
+   the original message M. Therefore, the decoding loss Ld is           duces image details but also weakens sensor–screen sampling
+   defined as                                                           interference, alleviating the impact of moiré patterns.
+                       Ld = MSE (M, Md )                   (6)           Table 2. Decoding BA values at different shooting distances
+                                                                              Scheme          20 cm   30 cm    40 cm        50 cm   60 cm
+                3. EXPERIMENTAL RESULTS
+                                                                           Stega 64 [10]      97.2%   96.7%    96.4%        95.2%   95.3%
+   3.1. Experimental Setup                                                DoBMark 64 [11]     98.5%   97.8%    98.3%        98.3%   98.0%
+                                                                            LFM 64 [14]       92.9%   92.7%    91.5%        92.5%   91.0%
+   To train the proposed network, 10,000 images are randomly                Proposed 64       99.5%   99.0%    98.5%        98.6%   98.2%
+   selected from the COCO dataset as the training dataset. All            ABStyle 30 [12]*    98.4%   98.0%    98.2%           -       -
+   images are resized to 128×128×3 pixels, and the length of              PIMoG 30 [13]*      99.4%   98.7%    98.0%        97.3%   98.7%
+   the watermark message is 64. The framework is implemented                Proposed 30       99.8%   99.5%    99.5%        99.7%   99.4%
+   by PyTorch and executed on NVIDIA GeForce RTX 4060 Ti.               3.3.2. Shooting angle
+   Parameters optimization of the network is implemented by the         The experiment is conducted by positioning the mobile de-
+   Adam optimizer with a learning rate of 1e-3 and betas of (0.9,       vice at different angles relative to the center of the display
+   0.999). The batch size is 16 and the training epoch is 100. The      image. The shooting angles are 20°, 30°, and 40° from left
+   depth of the PLR defaults to 2. The mobile shooting device           to right and from top to bottom. Table 3 exhibits that Pro-
+   and the image monitor use IQOO Neo 5S and Lenovo Display             posed 30 maintains BA above 99% across different shooting
+   HDR, respectively. Peak signal-to-noise ratio (PSNR), SSIM,          angles. This demonstrates that long-range modeling com-
+   and learned perceptual image patch similarity (LPIPS) are se-        bined with high-frequency enhancement enables the network
+   lected as the evaluation metrics. Bit accuracy (BA) is used          to preserve critical details across large geometric variations,
+   to evaluate robustness by calculating the accuracy of decoded        thereby maintaining high decoding accuracy.
+   messages. The proposed scheme is compared with the bench-              Table 3. Decoding BA values at different shooting angles
+   mark Stega [10] and LFM [14], the state-of-the-art (SOTA)                 Scheme        L 40° / T 40°    L 30° / T 30°     L 20° / T 20°
+   schemes DoBMark [11], PIMoG [13] and ABStyle [12]. Par-                Stega 64 [10]   88.0% / 96.7%    95.7% / 96.2%     96.2% / 95.0%
+                                                                         DoBMark 64 [11] 92.7% / 97.5%     97.5% / 97.7%     98.1% / 98.2%
+   ticularly, we clarify that, in the tables, we reported the results
+                                                                           LFM 64 [14]    84.8% / 91.5%    89.2% / 89.6%     91.0% / 90.2%
+   of PIMoG and ABStyle from the original papers, as indicated             Proposed 64    96.8% / 98.6%    98.6% / 98.6%     97.7% / 98.8%
+   by the symbol *, since they apply a watermark message with            ABStyle 30 [12]*        -            97.1% / -             -
+   a length of 30 and we could not reliably reproduce the results.       PIMoG 30 [13]* 97.1% / 98.7%      98.1% / 98.7%     98.7% / 99.2%
+                                                                           Proposed 30    99.0% / 99.0%    99.3% / 99.4%     99.2% / 99.6%
+   In the following tables and figures, the suffixes 30 and 64
+                                                                             Scheme        R 40° / B 40°    R 30° / B 30°     R 20° / B 20°
+   denote embedding capacities of 30 bits and 64 bits, respec-            Stega 64 [10]   96.0% / 95.7%    96.7% / 95.2%     96.7% / 96.0%
+   tively.                                                               DoBMark 64 [11] 95.8% / 95.5%     96.5% / 96.8%     97.9% / 97.3%
+                                                                           LFM 64 [14]    90.6% / 91.0%     90.0%/ 91.7%     89.4% / 91.4%
+   3.2. Visual quality
+                                                                           Proposed 64    99.0% / 98.0%    99.0% / 98.3%     99.2% / 97.7%
+   The invisibility of different watermarking schemes is com-            ABStyle 30 [12]*        -            98.3% / -             -
+   pared in Table 1. The PSNR of the proposed scheme is lower            PIMoG 30 [13]* 99.4% / 99.2%      98.9% / 98.7%     99.0% / 99.0%
+   than that of ABStyle. However, due to the distribution of wa-           Proposed 30    99.3% / 99.3%    99.8% / 99.5%     99.7% / 99.1%
+   termark information in texture-rich high-frequency regions,          3.3.3. Shooting device
+   the proposed scheme achieves the highest SSIM, indicating            The above experiments are conducted with IQOO Neo 5S and
+   optimal visual quality.                                              Lenovo Display HDR. To verify the adaptability of the pro-
+   Table 1. Invisibility assessment of different schemes ( 64 and       posed scheme, two devices, Honor 90 GT and iPhone 15 Pro
+    30 denote the embedded message length)                              Max, and one monitor, Sanc, are introduced, and the model is
+           Scheme            PSNR (dB)        SSIM         LPIPS        tested under different combinations. The shooting angle and
+        Stega 64 [10]          28.35          0.9026       0.051
+                                                                        distance are fixed at 0 and 50 cm. It can be concluded from
+       DoBMark 64 [11]         34.77          0.9673       0.017
+         LFM 64 [14]           32.92          0.9566       0.024        Table 4 that the proposed watermarking scheme achieved a
+         Proposed 64           35.29          0.9868       0.006        higher BA than Stega 64 and LFM 64, with an increase of
+       ABStyle 30 [12]*        38.20          0.9840         -          approximately 2.6% and 6%, respectively.
+       PIMoG 30 [13]*          36.21          0.9850         -
+         Proposed 30           36.69          0.9912       0.004            Table 4. Decoding BA values under different devices
+                                                                                             Stega 64 DoBMark 64 LFM 64
+   3.3. Performance evaluation with screen-shooting                      Display Camera                                 Proposed 64
+                                                                                               [10]      [11]      [14]
+   3.3.1. Shooting distance                                                       IQOO        96.2%     98.6%     92.3%    98.9%
+                                                                         Lenovo   Honor       95.7%     98.3%     91.8%    98.3%
+   The shooting distance ranges from 20 cm to 60 cm, with an                      Iphone      96.0%     97.9%     92.1%    98.7%
+   interval of 10 cm for each capture. As shown in Table 2,                       IQOO        95.9%     98.5%     92.5%    98.6%
+   the proposed watermarking scheme exhibits superior decod-               Sanc   Honor       95.4%     97.9%     91.6%    97.8%
+   ing efficiency within the tested distance range. Notably, the                  Iphone      95.7%     97.9%     92.2%    98.3%
+#0621
+
+
+
+                                 (a)                     (b)                     (c)                                (d)
+
+
+
+
+                                 (e)                     (f)                     (g)                                (h)
+
+
+
+
+   Fig. 2. Accuracy under different distortions in electronic transmission channels. (a) Resizing; (b) JPEG compression; (c)
+   Gaussian Blur; (d) Salt and Pepper noise; (e) Dropout; (f) Cropout; (g) Adjust sharpness; (h) Adjust saturation.
+                                                                                               Encoded   Residual         Encoded   Residual
+   3.4. Performance evaluation in electronic transmission                          Original     w/o Le    w Le              w Le     w Le
+
+   The model performance in electronic transmission scenarios
+   is evaluated by testing on six distortions included in training
+   and two additional distortions not used in training: sharpness
+   adjustment and saturation adjustment. All compared models
+   are trained with the same distortions to ensure fairness. As
+   shown in Fig. 2, the proposed method achieves superior de-
+   coding efficiency under most distortions. For JPEG compres-
+   sion, when the quality factor is 30, the BA of the proposed
+   method is 3.47% lower than that of Stega 64. However, as
+   the quality factor increases, the proposed method maintains       Fig. 3. Examples of watermarked images generated by the
+   the highest BA from a quality factor of 40 onward. Under ex-      model with Le and the model without Le , along with their
+   treme distortion scenarios, such as a crop ratio of 70%, the BA   corresponding residual images (magnified 5 times).
+   of all methods drops significantly, while the proposed method
+                                                                     Table 5. Comparison of models with various attention mod-
+   still attains the highest BA.
+                                                                     ules
+                      4. ABLATION STUDY                                                                     w HECAM PSA       SE w/o HECAM
+                                                                                           PSNR (dB)           35.29  33.46 33.51    33.65
+   4.1. Effectiveness of HECAM                                       Visual quality
+                                                                                              SSIM            0.9868 0.9849 0.9851  0.9790
+   The effectiveness of HECAM is evaluated by comparing                                           30 cm       99.0% 98.3% 98.2%     97.7%
+   the proposed model with variants incorporating SE [15] and                          Shooting 40 cm         98.5% 98.0% 97.8%     97.4%
+                                                                                       distance 50 cm         98.6% 97.9% 98.0%     96.8%
+   PSA [16] modules, as well as a baseline model without
+                                                                                                  60 cm       98.2% 97.8% 97.8%     97.0%
+   any attention mechanism. As shown in Table 5, the model              Attack
+                                                                                                 Left 30°     98.6% 97.4% 97.8%     96.3%
+   with HECAM outperforms the other three ablation models                              Shooting Right 30°     99.0% 97.7% 98.0%     96.4%
+   in terms of invisibility and robustness, with improvements                           angle    Up 30°       98.6% 98.0% 97.6%     95.9%
+                                                                                                Down 30°      98.3% 97.5% 97.3%     95.5%
+   of 1.64 dB in PSNR and 1.95% in average BA compared
+   to the model without HECAM. Even without HECAM, the               3, the residual image generated by the model with Le has a
+   WNet maintains BA over 95.5% across diverse shooting an-          concentrated distribution of watermark information. This is
+   gles, indicating that long-range model can provide a strong       because Le encourages Ir to match the LDC-predicted mask,
+   baseline for screen-shooting robustness, while HECAM fur-         resulting in a more concentrated residual distribution on tex-
+   ther boosts performance by enhancing texture-related high-        ture edge regions.
+   frequency carriers. The effectiveness of HECAM lies in its                             5. CONCLUSION
+   high-frequency decomposition based on the Laplacian pyra-         This work introduces a resilient watermarking scheme that
+   mid, which enables the network to capture global features         significantly improves both robustness and imperceptibility
+   while preserving local details.                                   against screen-shooting distortions. By employing long-
+   4.2. Effectiveness of texture edge guided MSE loss                range feature modeling and high-frequency enhancement
+   To evaluate the effectiveness of the proposed loss function in    techniques, the proposed method improves watermark local-
+   guiding the distribution of watermark features, Le is replaced    ization accuracy and achieves good preservation of image
+   by the MSELoss in an ablation experiment. As shown in Fig.        details.
+#0621
+                       6. REFERENCES                               [11] D. Guo, X. Zhu, F. Li, H. Yao, and C. Qin, “Dobmark: A
+                                                                        double-branch network for screen-shooting resilient im-
+    [1] J. Chi-Yuan and H.-H. Shuai, “Fpw: Frequency-domain             age watermarking,” Expert Systems with Applications,
+        pixel-by-pixel watermarking against unauthorized im-            vol. 246, p. 123159, 2024.
+        ages used on training generative model,” in 2025 IEEE
+        International Conference on Image Processing (ICIP),       [12] G. Gao, X. Chen, L. Li, Z. Xia, J. Fei, and Y.-Q. Shi,
+        2025, pp. 1211–1216.                                            “Screen-shooting robust watermark based on style trans-
+                                                                        fer and structural re-parameterization,” IEEE Transac-
+    [2] Q. Ying, X. Hu, X. Zhang, Z. Qian, S. Li, and X. Zhang,         tions on Information Forensics and Security, vol. 20, pp.
+        “Rwn: Robust watermarking network for image crop-               2648–2663, 2025.
+        ping localization,” in 2022 IEEE International Confer-
+                                                                   [13] H. Fang, Z. Jia, Z. Ma, E.-C. Chang, and W. Zhang, “Pi-
+        ence on Image Processing (ICIP), 2022, pp. 301–305.
+                                                                        mog: An effective screen-shooting noise-layer simula-
+    [3] H. Wang, H. Wang, F. Zhang, Z. Shi, and X. Huang,               tion for deep-learning-based watermarking network,” in
+        “Moiré-watermark:     Robust watermarking against              Proceedings of the 30th ACM International Conference
+        screen-shooting using moiré patterns,” IEEE Transac-           on Multimedia, 2022, pp. 2267–2275.
+        tions on Multimedia, vol. 27, pp. 5103–5118, 2025.         [14] E. Wengrowski and K. Dana, “Light field messaging
+                                                                        with deep photographic steganography,” in Proceedings
+    [4] Y. Li, X. Liao, and X. Wu, “Screen-shooting resis-
+                                                                        of the IEEE/CVF Conference on Computer Vision and
+        tant watermarking with grayscale deviation simulation,”
+                                                                        Pattern Recognition, 2019, pp. 1515–1524.
+        IEEE Transactions on Multimedia, vol. 26, pp. 10 908–
+        10 923, 2024.                                              [15] J. Hu, L. Shen, and G. Sun, “Squeeze-and-excitation
+                                                                        networks,” in Proceedings of the IEEE Conference on
+    [5] L. Fu, X. Liao, J. Guo, L. Dong, and Z. Qin, “Wa-               Computer Vision and Pattern Recognition, 2018, pp.
+        verecovery: Screen-shooting watermarking based on               7132–7141.
+        wavelet and recovery,” IEEE Transactions on Circuits
+        and Systems for Video Technology, vol. 35, no. 4, pp.      [16] H. Zhang, K. Zu, J. Lu, Y. Zou, and D. Meng, “Epsanet:
+        3603–3618, 2025.                                                An efficient pyramid squeeze attention block on convo-
+                                                                        lutional neural network,” 2021.
+    [6] H. Wang, H. Wang, X. Huang, and Z. Shi, “Enhanced
+        screen shooting resilient document watermarking,” in       [17] X. Soria, G. Pomboza-Junez, and A. D. Sappa, “Ldc:
+        Proceedings of the ICASSP 2024-2024 IEEE Interna-               Lightweight dense cnn for edge detection,” IEEE Ac-
+        tional Conference on Acoustics, Speech and Signal Pro-          cess, vol. 10, pp. 68 281–68 290, 2022.
+        cessing (ICASSP), 2024, pp. 4515–4519.
+
+    [7] D. Xiao, Q. Tang, A. Zhao, and M. Li, “Robust water-
+        marking scheme in encrypted domain based on integer
+        lifting wavelet transform and compressed sensing,” in
+        Proceedings of the ICASSP 2023-2023 IEEE Interna-
+        tional Conference on Acoustics, Speech and Signal Pro-
+        cessing (ICASSP), 2023, pp. 1–5.
+
+    [8] X. Xiao, Y. Zhang, Z. Hua, Z. Xia, and J. Weng, “Client-
+        side embedding of screen-shooting resilient image wa-
+        termarking,” IEEE Transactions on Information Foren-
+        sics and Security, vol. 19, pp. 5357–5372, 2024.
+
+    [9] Y. Bai, L. Li, S. Zhang, J. Lu, and M. Emam, “Fast
+        frequency domain screen-shooting watermarking al-
+        gorithm based on orb feature points,” Mathematics,
+        vol. 11, no. 7, p. 1730, 2023.
+
+   [10] M. Tancik, B. Mildenhall, and R. Ng, “Stegastamp: In-
+        visible hyperlinks in physical photographs,” in Proceed-
+        ings of the IEEE/CVF Conference on Computer Vision
+        and Pattern Recognition, 2020, pp. 2117–2126.
+#621 : "Screen-Shooting Resilient Watermarking based on Long-Range Modeling and High-Frequency Enhancement"
+ Jun-Zhuo Zou (SUN YAT-SEN UNIVERSITY) <ncuzjz2022@163.com>
+ NanRun Zhou (Shanghai University of Engineering Science) <nrzhou@sues.edu.cn>
+ Jane Wang (The University of British Columbia) <zjanew@ece.ubc.ca>
+ Zhihua Xia (Jinan University) <xia_zhihua@163.com>
+ Xiangui Kang (SUN YAT-SEN UNIVERSITY) <isskxg@mail.sysu.edu.cn>
+
+Topics/EDICS:
+ Machine Learning for Signal Processing - Deep learning : Deep learning models
+ Image, Video and Multidimensional Signal Processing - Image and video processing techniques : Machine learning for image and video
+processing
+ Information Forensics and Security - Watermarking and data hiding : Theoretical models
+
+Keywords:
+Screen-shooting, Watermarking, Long-range modeling, High-frequency enhancement, Texture edge guided loss
+
+
+
+=================================
+REVIEW #1
+=================================
+Confidence: Confident
+Recommendation: Marginal accept, Not award quality (score: 4.42)
+
+Reviewer’s comments to authors: |---
+The authors introduce a useful and robust approach to screen-shooting resilient watermarking, demonstrating substantial technical novelty
+through the WNet cascaded dual-UNet architecture and the High-Frequency Enhancement Channel Attention Module (HECAM). The
+experimental depth is sufficient, effectively validating the model’s resilience across various real-world shooting distances and angles on the
+COCO dataset. Furthermore, the literature review is well-constructed, and the references are relevant, providing excellent context regarding
+recent deep learning-based watermarking frameworks without any significant omissions. Overall, the clear structural progression and
+thorough empirical evidence make this a publication-ready paper.
+ ---|
+
+Confidential comments to chairs: |---
+It’s a good paper. The work has a moderate level of novelty and is useful.
+ ---|
+
+Is the work within the scope of the conference and relevant to ICIP? Clearly within scope
+Is the technical contribution novel? Substantial novelty
+Is the technical contribution significant? Moderate contribution
+Is the manuscript technically correct? Technically sound
+Is the manuscript properly structured and clearly written? Well-structured and clearly written
+Is the level of experimental validation sufficient? Sufficient validation/theoretical paper
+Are the references appropriate, without any significant omissions? No significant omissions
+Are there any references that do not appear to be relevant? All references are directly relevant to the contribution of the manuscript
+
+Is this paper ready to be extended to a full-length journal submission? Yes, ready to be extended to a full-length journal submission.
+Would you be willing to serve as reviewer of the extended journal submission? No
+
+
+=================================
+REVIEW #2
+=================================
+Confidence: Very Confident
+Recommendation: Marginal accept, Not award quality (score: 3.81)
+
+Reviewer’s comments to authors: |---
+This paper proposes to develop a neural watermarking scheme which is robust to screen-shooting. The synchronisation process uses the 4
+corner of the image. On originality is that is use a distortion layer, PIMoG, even if a comparison with basic data-augmentation processes
+could have been done. The performances seems good, but comparisons with PixelSeal or TrustMark, which are very robust to geometrical
+transform, are missing. The experimental setting is interesting and rigorous though. The security of this scheme is probably very small since
+the structure of the watermark is very simplistic (vertical waves, as seen in Fig. 3).
+ ---|
+
+Confidential comments to chairs: |---
+Ok for ICIP in my opinion.
+---|
+
+Is the work within the scope of the conference and relevant to ICIP? Clearly within scope
+Is the technical contribution novel? Substantial novelty
+Is the technical contribution significant? Substantial contribution
+Is the manuscript technically correct? Some minor concerns
+Is the manuscript properly structured and clearly written? Some minor issues
+Is the level of experimental validation sufficient? Limited but convincing
+Are the references appropriate, without any significant omissions? Some significant omissions
+Are there any references that do not appear to be relevant? Some of the references are of limited relevance
+
+Is this paper ready to be extended to a full-length journal submission? No, not ready
+Would you be willing to serve as reviewer of the extended journal submission? No
+
+
+=================================
+REVIEW #3
+=================================
+Confidence: Confident
+Recommendation: Marginal accept, Not award quality (score: 4.42)
+
+Reviewer’s comments to authors: |---
+This paper builds on watermark channel estimation for resisting screen-shooting (D/A/D conversion) to propose an architecture that:
+1. uses skip connections to build a wavelet-type filter bank with down-/up-sampling capability (seeking clearer separation between analysis
+scales);
+2. uses attention-based Laplacian enhancement of textures (where most watermark energy is usually carried).
+The experimental part shows clear improvement, although maybe not as significant as the Authors claim, compared to the SOTA using
+neural nets. The respective merits of the two modules are assessed using sound ablation studies. In my opinion, the improvement is better
+overall robustness on more attacks, not so much the 0.52dB reduction in the embedding distortion.
+I’d suggest only minor editing:
+- I guess the word ’wavelet’ has to appear somewhere, as the resulting architecture clearly builds on the same structure;
+- I don’t see any reason why the venerable Bit-Error-Rate (BER) should be replaced by the ’Bit Accuracy’ that the authors promote, as BER
+= 1 - BA and watermarking is fundamentally a variation on communications with side information.
+
+Coming back to the results, what they suggest is:
+- better modelling capability of the network when it can learn the wavelet filters (this is what these approaches change fundamentally
+compared to the classical perfect-reconstruction, bi-orthogonal framework);
+- it is still unclear whether these techniques outperform the results obtained, e.g., by Deguillaume and Pun (SPIE, 2002) with the classical,
+much more energy-friendly and distortion-controlled schemes dating back 20+ years ago (that can embed 64 bits too, but at 38dB and
+resisting roughly the level and variety of attacks considered by the Authors).
+ ---|
+
+Confidential comments to chairs: |---
+See review.
+---|
+
+Is the work within the scope of the conference and relevant to ICIP? Clearly within scope
+Is the technical contribution novel? Substantial novelty
+Is the technical contribution significant? Moderate contribution
+Is the manuscript technically correct? Technically sound
+Is the manuscript properly structured and clearly written? Well-structured and clearly written
+Is the level of experimental validation sufficient? Sufficient validation/theoretical paper
+Are the references appropriate, without any significant omissions? No significant omissions
+Are there any references that do not appear to be relevant? All references are directly relevant to the contribution of the manuscript
+
+Is this paper ready to be extended to a full-length journal submission? No, not ready
+Would you be willing to serve as reviewer of the extended journal submission? No
+
+
+
+=================================
+AUTHORS’ REBUTTAL:
+=================================
+Response to Reviewer 1
+We thank the reviewer for the positive assessment.
+Response to Reviewer 2
+2.1 Role of PIMoG and comparison with PixelSeal/TrustMark
+In our work, PIMoG is not the main novelty but a training component used to approximate the compound degradations of screen-shooting.
+The main contribution is the cascaded dual-UNet-based watermarking framework and the high-frequency enhancement channel attention
+module.
+PixelSeal and TrustMark are important references for conventional geometric and electronic-channel distortions, but such robustness does
+not transfer to screen-shooting, which also introduces illumination changes, blur, moire, and device artifacts. Our reproduction shows that
+PixelSeal outperforms TrustMark. In its original setting, PixelSeal achieves 93.8%, 95.0%, and 96.3% under JPEG-50, Cropout-0.3, and
+resize-0.4, with a PSNR of 36.75 dB. However, when directly evaluated under the screen-shooting scenario, its performance is limited. At a
+shooting angle of 20° and a shooting distance of 50 cm, its decoding BA is only 84.3%. After retraining it under the same resolution,
+payload, and PIMoG-based noise layer as our method, its BA under screen-shooting improved to 95.8% at the same shooting setting, but its
+PSNR decreased to 34.19 dB, and its Cropout-0.3 robustness also declined markedly. This indicates a trade-off between screen-shooting
+robustness, visual quality, and conventional-channel robustness. Our method shows more stable performance across shooting angles,
+distances, and devices.
+2.2 Security implication of Fig. 3
+Fig. 3 illustrates the embedding structure rather than a directly observable fixed watermark template. Message recovery relies on learned
+decoding, not direct reading of a visible pattern. We will clarify that our work focuses on robustness under screen-shooting conditions,
+while cryptographic security analysis is outside its scope.
+Response to Reviewer 3
+3.1 Relation between WNet and wavelet-type filter bank structures
+We thank the reviewer for this point. WNet shares a multi-scale analysis-reconstruction characteristic with wavelet-type filter bank
+frameworks. However, the method does not use a classical wavelet transform. The analysis and fusion processes are learned through
+convolution. The backbone is a learnable cascaded dual-UNet with two-stage encoding/reconstruction and dense cross-stage skip
+connections. The relation is structural rather than based on a wavelet-filter design.
+3.2 BA and BER
+We used BA for consistency with recent neural watermarking papers and because it directly reflects the proportion of correctly decoded bits.
+The two metrics are equivalent: BER = 1 - BA. We will make this relation explicit in the revision.
+3.3 Discussion of Deguillaume and Pun (SPIE, 2002)
+Deguillaume and Pun is a representative classical method with strong affine synchronization capability. However, our work focuses on the
+screen-shooting setting rather than general affine robustness. Since the task assumptions and evaluation protocols are not fully aligned,
+direct comparison would not be rigorous. We will narrow the claim to \223under the considered screen-shooting scenario\224.
+3.4 Discussion of traditional watermarking methods
+Following the reviewer\222s suggestion, we examined traditional methods represented by Pun et al. However, some implementation details
+could not be recovered reliably from the public descriptions, so we could not obtain stable results for a fair comparison. We also examined
+classical transform-domain baselines such as the DWT-DCT-SVD family. Although these methods are effective under standard digital
+distortions, their robustness can not transfer reliably to the screen-shooting protocol. This is because screen-shooting involves the
+display-camera pipeline, which alters photometric response and sampling structure. In this case, traditional schemes designed primarily for
+conventional digital-channel distortions may have limited robustness in a screen-shooting scenario.
+
+
+
+(no chair comments to authors)
+

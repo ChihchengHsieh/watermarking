@@ -1,0 +1,2 @@
+global_step,step_time_sec,meta_loss,grad_norm,tasks
+1,2.6932,1.024838,84.007977,jpeg

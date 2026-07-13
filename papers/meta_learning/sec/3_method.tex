@@ -1,0 +1,104 @@
+\section{Method}
+\label{sec:method}
+
+\subsection{Problem Setup}
+
+Let $\mathcal{G}$ denote a pretrained diffusion generator and let $W$ be the fixed SpiderMark frequency-domain watermark pattern.
+For a prompt $p$ and initial latent noise $x_T$, SpiderMark generates a clean image from $x_T$ and a watermarked image from a modified latent whose Fourier representation is blended with $W$.
+The verifier receives a recovered frequency-domain representation of a query image, together with auxiliary similarity cues, and predicts whether the image is watermarked.
+
+We assume a set of downstream attack tasks
+\begin{equation}
+    \mathcal{T} = \{ \tau_1, \ldots, \tau_K \},
+\end{equation}
+where each $\tau_k$ is an image transformation such as JPEG compression, blur, random crop, occlusion, geometric warp, or a compound augmentation.
+Each task preserves the binary verification label but changes the evidence available to the verifier.
+The goal is to learn verifier parameters $\theta$ that perform well across held-out examples and checkpoints after exposure to these attack-conditioned tasks.
+
+\begin{figure*}[t]
+    \centering
+    \includegraphics[width=0.95\textwidth]{figures/metaspidermark_overview_imagegen.png}
+    \caption{\textbf{MetaSpiderMark overview.}
+    The SpiderMark watermark injection pipeline remains unchanged, while verifier training is reorganized into downstream attack episodes.
+    Each episode samples an attack-conditioned support/query split, adapts a meta-compatible verifier on the support set, and updates the base verifier using query performance.
+    This trains an initialization that is more robust to downstream transformations than static supervised verifier training.}
+    \label{fig:method_overview}
+\end{figure*}
+
+\subsection{Meta-Compatible Verifier}
+
+The base SpiderMark verifier uses a ResNet-style backbone over frequency-domain inputs and optionally fuses PSNR and $\ell_1$ cues in the final prediction head.
+For meta-learning, we implement the verifier using meta-parameterized convolution, batch-normalization, and linear layers.
+This allows temporary inner-loop parameter updates without overwriting the base parameters.
+Given input spectrum $x$, PSNR cue $s$, and $\ell_1$ cue $d$, the verifier predicts
+\begin{equation}
+    f_{\theta}(x, s, d) \in \mathbb{R}^2.
+\end{equation}
+When auxiliary cues are disabled, the head receives only the learned feature embedding; otherwise it concatenates the backbone feature with $(s,d)$ before classification.
+
+\subsection{Episodic Downstream Meta-Training}
+
+For each meta-training iteration, we sample an attack task $\tau_k$ and construct a support set $\mathcal{S}_k$ and query set $\mathcal{Q}_k$ from the SpiderMark verifier dataset.
+The dataset wrapper temporarily applies the task-specific augmentation while sampling both sets, then restores the base dataset state.
+This keeps each episode attack-conditioned while preserving the same clean/watermarked label space.
+
+The inner update adapts a copy of the verifier parameters using support loss:
+\begin{equation}
+    \theta'_k = \theta - \alpha \nabla_{\theta}
+    \mathcal{L}_{\mathcal{S}_k}(f_{\theta}),
+\end{equation}
+where $\alpha$ is the inner-loop learning rate and $\mathcal{L}$ is cross-entropy over clean versus watermarked labels.
+The outer update optimizes the original parameters using query loss after adaptation:
+\begin{equation}
+    \min_{\theta} \mathbb{E}_{\tau_k \sim p(\mathcal{T})}
+    \left[
+    \mathcal{L}_{\mathcal{Q}_k}(f_{\theta'_k})
+    \right].
+\end{equation}
+In the current implementation we use a first-order approximation for efficiency.
+
+\begin{algorithm}[t]
+\caption{MetaSpiderMark Verifier Training}
+\label{alg:metaspidermark}
+\begin{algorithmic}[1]
+\Require SpiderMark verifier dataset $\mathcal{D}$; attack tasks $\mathcal{T}$; verifier $f_\theta$; support size $n_s$; query size $n_q$
+\For{each meta-training iteration}
+    \State Sample attack task $\tau_k$ using a task scheduler
+    \State Sample support set $\mathcal{S}_k$ and query set $\mathcal{Q}_k$ under $\tau_k$
+    \State Copy verifier parameters $\theta$ to task parameters $\theta'_k$
+    \State Update $\theta'_k$ using support loss on $\mathcal{S}_k$
+    \State Compute query loss on $\mathcal{Q}_k$ using $f_{\theta'_k}$
+    \State Update $\theta$ with the query loss
+    \State Feed query loss back to the scheduler, if the scheduler supports feedback
+\EndFor
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Task Scheduling}
+
+The simplest task distribution is uniform over attack tasks; in our benchmark it serves as a minimal sanity anchor rather than the main compute target.
+We also support cyclic scheduling for deterministic coverage, but reserve it for optional diagnostics.
+The main scheduler comparison includes non-contextual bandit scheduling, ATS-style adaptive scheduling based on meta-model state, BASS-style contextual bandit scheduling, and ASr-style adaptive sampling based on online diversity, entropy, and difficulty statistics.
+Our ATS-style and BASS-style controllers are repository-native approximations that preserve the relevant scheduling principle under the SpiderMark attack-task interface; they should be interpreted as SOTA-inspired task-scheduler baselines rather than official reproductions of the original implementations.
+The ASr-style row similarly adapts the recent adaptive sampler idea to attack tasks by combining under-sampling and recency as a diversity signal, loss volatility as an entropy-like signal, and normalized recent query loss as a difficulty signal.
+We also provide a GCP-style appendix row that adapts exponential class-weight updates to attack-task weights; because the original GCP setting is class-combination sampling, we treat this row as a proxy rather than a direct reproduction.
+We also include an exploratory \texttt{derts\_proxy} mode for appendix experiments: it approximates DERTS-style representative and robust task selection using online scalar feedback, but it is not an official DERTS implementation because the current training loop does not optimize full task-pool gradient subset objectives.
+The repository further contains a residual scheduler that maintains a stable base distribution and learns a bounded correction from online feedback:
+\begin{equation}
+    p_{\mathrm{final}} =
+    \mathrm{normalize}(p_{\mathrm{base}} + \Delta),
+\end{equation}
+where $\Delta$ is constrained by a residual scale.
+The controller tracks per-task statistics such as usage count, recent loss, loss change, uncertainty, reward, and failure rate.
+An optional LLM-assisted variant receives a compact JSON summary of these statistics and proposes residual corrections, which are clipped and normalized locally.
+
+These schedulers are part of the benchmark design rather than the only claimed contribution.
+They allow the final evaluation to answer whether gains come from meta-learning itself, from better attack exposure, or from their combination.
+
+\paragraph{Meta-learning algorithm context.}
+The main benchmark fixes the meta-learning update so that scheduler effects are isolated.
+For context, the code also supports several fixed-scheduler meta-learning updates: first-order MAML, second-order MAML~\cite{finn2017maml}, ANIL-style head-only inner adaptation, Reptile-style first-order optimization, a \texttt{matching\_net} attention baseline inspired by Matching Networks~\cite{vinyals2016matching}, a \texttt{proto\_net} metric baseline inspired by Prototypical Networks~\cite{snell2017prototypical}, and an \texttt{r2d2\_ridge} baseline inspired by differentiable closed-form solvers~\cite{bertinetto2019meta}.
+The \texttt{matching\_net} variant predicts query labels by soft attention over support embeddings.
+The \texttt{proto\_net} variant computes support-set class prototypes in the learned embedding space and uses negative squared Euclidean distances as query logits.
+The \texttt{r2d2\_ridge} variant fits a ridge classifier on support embeddings and backpropagates the query loss through the linear solve.
+This provides a stronger solver-head family for comparison, but it is not a full MetaOptNet SVM/QP reproduction~\cite{lee2019metaoptnet}.

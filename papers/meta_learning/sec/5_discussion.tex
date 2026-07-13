@@ -1,0 +1,20 @@
+\section{Discussion}
+\label{sec:discussion}
+
+The current evidence supports a focused interpretation: meta-learning improves the SpiderMark verifier, especially under downstream transformations that are poorly captured by static supervised training.
+This does not mean that the watermark pattern alone changed.
+The central comparison should be against the original SpiderMark verifier and against SOTA/canonical meta-learning baselines that could plausibly explain the same gains.
+
+This distinction matters for the final paper narrative.
+If MetaSpiderMark is presented as a new meta-learning algorithm, reviewers will expect comparisons with meta-learning methods such as MAML variants, Reptile-style updates, or broader few-shot learning baselines.
+If it is presented as a robust watermark verification framework, the paper still needs to show that its meta-learning choice is competitive under realistic downstream attacks.
+The benchmark should therefore prioritize SpiderMark anchor baselines and a matched scheduler table, while treating the SOTA/canonical meta-learning table as the context that explains whether the verifier update itself is competitive.
+In practice, this means first completing the fixed-budget scheduler rows for UCB, ATS-style, BASS-style, and ASr-style sampling, then adding MAML, ANIL, Reptile, Matching Networks, Prototypical Networks, and an R2D2-style ridge solver under a fixed scheduler.
+
+There are also practical limitations.
+Meta-training adds computational cost because each episode requires support and query passes, and checkpoint selection can materially affect downstream robustness.
+The residual and LLM-assisted schedulers introduce additional degrees of freedom; they should be evaluated carefully so that the paper does not conflate verifier meta-learning with scheduler sophistication.
+For the main paper, ATS-style adaptive task scheduling, BASS-style contextual bandit scheduling, and ASr-style adaptive sampling are the most important SOTA-inspired scheduler baselines because they directly target task selection during meta-learning.
+The paper should avoid overclaiming exact reproduction unless the original ATS or BASS code is ported into this benchmark.
+The LLM-assisted scheduler is better framed as a diagnostic extension unless it provides a large reproducible gain over ATS, BASS, and the local residual scheduler.
+Finally, all preliminary results in this draft should be considered provisional until repeated across seeds and evaluated on the full benchmark suite.

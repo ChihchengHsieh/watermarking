@@ -1,0 +1,117 @@
+\section{Related Work}
+\label{sec:rel_work}
+
+Watermarking AI-generated content has become a critical area of research due to the rapid 
+adoption of generative models and the concomitant concerns around provenance, copyright 
+protection, and content authenticity. The proliferation of hyper-realistic synthetic media, 
+including DeepFakes, has intensified the need for reliable attribution and verification 
+mechanisms~\cite{gupta2024comprehensive, nguyen2022deep, verdoliva2020media}. 
+Recent work spans techniques that embed imperceptible signatures into the image generation 
+process itself, frequency-domain watermarking methods, and detection approaches that 
+leverage deep learning for content authentication. These classes of methodologies are 
+described next.
+
+%% ----- SUBSECTION 1: Content Authentication and Detection Context -----
+\noindent\textbf{Content Authentication in the Era of Generative AI.}
+The growing sophistication of generative models has rendered traditional detection 
+approaches increasingly insufficient. As surveyed by Gupta~et~al.~\cite{gupta2024comprehensive}, 
+DeepFake detection methods have evolved from simple spatial artifact analysis to 
+multi-modal fusion techniques combining spatial, temporal, and frequency-domain 
+features. Frequency-based approaches have proven particularly effective: 
+Neves~et~al.~\cite{neves2020ganprintr} demonstrated that the Discrete Fourier 
+Transform can expose statistical artifacts in GAN-generated frames, compressing 
+2D amplitude spectra into feature vectors for classification. 
+Gu{\"e}ra and Delp~\cite{guera2018deepfake} showed that temporal inconsistencies 
+introduced by face-swapping can be captured through CNN--RNN pipelines operating 
+on frame-level features.
+However, detection-based approaches are fundamentally reactive: they attempt to identify 
+synthetic content after generation, without any cooperation from the generative model. 
+This motivates \emph{proactive} approaches based on digital watermarking, which embed 
+verifiable signatures during or after the generation process, enabling content attribution 
+regardless of downstream analysis capabilities.
+
+%% ----- SUBSECTION 2: Embedded Watermarking in Generative Models -----
+\noindent\textbf{Embedded Watermarking in Generative Models.}
+Rezaei~et~al.~\cite{rezaei2024lawa} propose LaWa, a watermarking framework that 
+leverages the latent space of latent diffusion models (LDMs) to integrate watermarks 
+during generation, achieving robustness across transformations while maintaining 
+perceptual quality. This approach embeds signatures directly into generative pipelines 
+rather than performing post-hoc modifications, demonstrating improved resilience and 
+low false positive rates compared to earlier methods. A similar line of work focuses 
+on embedding watermarks specifically within diffusion processes. 
+Chen~et~al.~\cite{chen2025tagwm} introduce Dynamic Watermarks for diffusion models, 
+using multi-stage embedding that includes a fixed watermark in the model's learned noise 
+distribution and a dynamic, image-adapted watermark decoded via a fine-tuned neural 
+decoder. This enables robust source verification with minimal visual impact.
+
+Tree-Ring Watermarking~\cite{wen2023tree_ring} embeds concentric ring patterns into 
+the Fourier space of the initial noise vector, producing watermarks that are invisible 
+and structurally invariant to several geometric transformations. 
+The Stable Signature~\cite{fernandez2023stable} fine-tunes the latent decoder of 
+diffusion models to embed a recoverable binary signature into all generated outputs. 
+More recently, methods such as ZoDiac~\cite{zhang2024attack}, 
+Gaussian Shading~\cite{yang2024gaussian}, and ROBIN~\cite{huang2024robin} have 
+introduced further innovations in latent-space watermark injection, adversarial concealment, and distribution-preserving embedding.
+
+Despite these advances, existing in-generation methods exhibit important limitations. 
+First, approaches relying on handcrafted detection metrics such as frequency-domain 
+correlation or distance thresholds suffer from \emph{threshold instability}: the optimal 
+decision boundary varies substantially across different image transformations. 
+Second, most methods employ isotropic frequency structures (concentric rings, uniform 
+grids, or random masks) that distribute watermark energy uniformly by radius, making 
+them vulnerable to directional distortions including motion blur and anisotropic 
+resampling. Third, existing verification strategies typically operate in a binary, 
+threshold-dependent manner without producing calibrated confidence scores.
+
+%% ----- SUBSECTION 3: Frequency-Domain Methods -----
+\noindent\textbf{Frequency-Domain Watermarking: Fourier and Wavelet Transforms.}
+The Discrete Fourier Transform (DFT) has long been a fundamental tool in signal and 
+image processing. Several works~\cite{jia2023fourier, jiang2021focal, rao2021global, 
+yu2022deep} have explored the use of DFT for image analysis, exploiting 
+frequency-domain representations to enhance model performance and gain deeper 
+insights into image characteristics. For instance, Baig~\cite{baig2022dft} employs 
+DFT to globally assess the quality of blurred images, while 
+Rao~\cite{rao2021global} uses frequency analysis to capture global image properties. 
+These studies demonstrate that DFT is particularly effective for extracting global 
+information from images, motivating its use in watermark injection and verification.
+
+Concerning DWT-based approaches, the Discrete Wavelet Transform processes signals 
+by decomposing them into multiple frequency bands at varying spatial resolutions. 
+This multi-scale decomposition makes DWT especially well suited for capturing 
+localized details. Prior studies~\cite{mohideen2008image, pimpalkhute2021digital} have 
+successfully applied DWT to image denoising tasks. In particular, 
+Tian~\cite{tian2023multi} highlights the benefit of DWT in jointly representing 
+spatial and frequency information through multi-resolution analysis.
+
+In the context of watermarking, classical approaches~\cite{barni2001improved,raval2003discrete,shensa2002discrete,tao2004robust} often exploit DWT subbands for embedding 
+data. However, these methods were designed for natural images and do not account for 
+the unique properties of diffusion-generated content, where the watermark can be 
+injected directly into the generative noise.
+
+%% ----- SUBSECTION 4: Deep Learning Watermarking -----
+\noindent\textbf{Deep Learning for Watermarking and Steganography.}
+Digital watermarking is a technique for safeguarding digital content by asserting 
+copyright ownership. Its key distinction from steganography lies in the embedding 
+priority: watermarking focuses on robustness, ensuring the embedded information 
+remains detectable even after modifications or distortions, whereas steganography 
+emphasizes invisibility. With the recent advances in deep learning, a plethora of 
+learned watermarking methods have emerged. To the best of our knowledge, the 
+HiDDeN~\cite{zhu2018hidden} approach was the first end-to-end deep watermarking 
+framework that embeds resilient messages via a differentiable noise layer. 
+More recently, Zhao~et~al.~\cite{zhao2024invisible} demonstrated that invisible 
+image watermarks are provably removable using generative AI, underscoring the 
+vulnerability of post-hoc watermarking methods and motivating in-generation 
+approaches such as SpiderMark.
+
+%% ----- SUBSECTION 5: Positioning of SpiderMark -----
+\noindent\textbf{Positioning of SpiderMark.}
+While many recent contributions embed watermarks within generative models, most focus 
+on latent representation manipulation (e.g., LaWa), dynamic multi-stage embedding 
+(e.g., Dynamic Watermarks), or distribution-preserving strategies (e.g., Gaussian 
+Shading) for diffusion models, SpiderMark differentiates itself by proposing a truly 
+hybrid watermarking framework that couples algorithmic frequency-domain injection with 
+learning-based probabilistic verification. Unlike prior approaches that rely on 
+handcrafted metrics or isotropic frequency patterns, SpiderMark introduces a structured 
+spider-web pattern providing directional robustness and trains a lightweight verifier 
+that outputs calibrated confidence scores, addressing the threshold instability that 
+limits existing methods in real-world deployment scenarios.

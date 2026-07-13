@@ -1,10 +1,88 @@
-data/
+# Python / notebooks
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+
+# Secrets / local environment
+.secret.py
+secret.py
+.env
+.env.*
+
+# Local IDE / OS files
+.vscode/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Model checkpoints and local model artifacts
 *.pth
-watermark_training/
-watermark_dataset/
-watermark_dataset_ring/
-runs*/
-deprecated/
-verifier_dataset_*/
-fid_outputs/
+*.pt
+*.ckpt
+*.safetensors
+*.onnx
+*.bin
+local_checkpoints/
+model_backup/
+
+# Datasets
+data/
 old_datasets/
+watermark_training/
+watermark_dataset*/
+verifier_dataset_*/
+posthoc_dataset_*/
+
+# Generated outputs / experiment caches
+runs*/
+wandb/
+mlruns/
+eval_results/
+fid_outputs/
+metrics_cache/
+outputs/
+outputs copy/
+paper_grid/
+*_history.csv
+*_training_curves.png
+*_llm_scheduler.jsonl
+*_timing.csv
+*_meta_loss_plot.png
+
+# Downloaded third-party baselines / paper code
+external/
+
+# Literature PDFs copied locally for reading
+literatures/*.pdf
+
+# Temporary extraction / scratch files
+tmp*/
+tmp_*.txt
+*.tmp
+*.temp
+*.bak
+
+# LaTeX build artifacts
+*.aux
+*.bbl
+*.blg
+*.brf
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.synctex.gz
+*.toc
+*.lof
+*.lot
+*.nav
+*.snm
+*.vrb
+
+# Heavy benchmark artifacts; keep small CSV/TEX summaries trackable.
+papers/meta_learning/benchmark_outputs/**/checkpoints/
+papers/meta_learning/benchmark_outputs/**/*.pth
+papers/meta_learning/benchmark_outputs/**/*.pt

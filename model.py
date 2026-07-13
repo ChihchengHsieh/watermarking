@@ -44,9 +44,14 @@ class PNSRL1Warpper(nn.Module):
         x = torch.cat([x, pnsr.unsqueeze(1), l1.unsqueeze(1)], dim=1)
         x = self.fc(x)
         return x
+    
 
 
 
+def make_meta_model(in_channels, include_psnr_l1=False,):
+    from meta.meta_resnet18 import MetaVerifier
+    print("Using META verifier model (MetaModule).")
+    return MetaVerifier(in_channels=in_channels, include_psnr_l1=include_psnr_l1)
 
 # ---------------- small model helper ----------------
 def make_model(in_channels, include_psnr_l1=False):
@@ -90,7 +95,7 @@ def load_checkpoint(model, cp_path, device, opt=None):
         # 1) legacy single state_dict saved by torch.save(model.state_dict())
         # 2) full checkpoint dict saved with model_state_dict, optimizer_state_dict, epoch, maybe scheduler
         if isinstance(ckpt, dict) and "model_state_dict" in ckpt:
-            model.load_state_dict(ckpt["model_state_dict"], strict=False)
+            load_result = model.load_state_dict(ckpt["model_state_dict"], strict=True)
             if "optimizer_state_dict" in ckpt:
                 try:
                     opt.load_state_dict(ckpt["optimizer_state_dict"])
@@ -101,6 +106,12 @@ def load_checkpoint(model, cp_path, device, opt=None):
             else:
                 start_epoch = 1
             print(f"Restored model and optimizer. Resuming from epoch {start_epoch}")
+
+            # print out the load results for missing and unexpected keys
+            if load_result.missing_keys:
+                print("Warning: missing keys in model state_dict:", load_result.missing_keys)
+            if load_result.unexpected_keys:
+                print("Warning: unexpected keys in model state_dict:", load_result.unexpected_keys)
 
             best_val_loss = ckpt.get("best_val_loss", float("inf"))
             best_epoch = ckpt.get("best_epoch", None)

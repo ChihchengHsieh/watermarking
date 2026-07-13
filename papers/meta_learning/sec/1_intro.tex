@@ -1,0 +1,41 @@
+\section{Introduction}
+\label{sec:intro}
+
+Diffusion models have made high-quality image generation widely accessible~\cite{ho2020denoising,rombach2022high}, increasing the need for provenance mechanisms that can identify synthetic content after it has been shared, compressed, edited, or re-uploaded.
+Watermarking is a natural tool for this setting: a generator can embed an imperceptible signal into its outputs, and a verifier can later decide whether a queried image came from the protected generation pipeline.
+However, the practical verification problem is more difficult than clean-image detection.
+Images rarely remain untouched.
+They are recompressed by social platforms, resized by messaging applications, cropped by users, blurred by editing tools, and sometimes subjected to multiple transformations in sequence.
+A useful verifier must therefore be robust not only to individual perturbations, but also to the mismatch between the transformations seen during training and those encountered at test time.
+
+SpiderMark builds on recent in-generation watermarking work for diffusion models~\cite{wen2023tree_ring,fernandez2023stable,yang2024gaussian,huang2024robin} and addresses several limitations of handcrafted frequency-domain detectors.
+It injects a structured spider-web pattern into the Fourier representation of the initial diffusion noise and trains a lightweight learned verifier to detect the recovered spectral signature.
+The spider-web pattern combines radial and angular components, while the verifier fuses deep spectral features with explicit similarity cues such as PSNR and $\ell_1$ distance.
+This combination improves robustness over threshold-based detectors and ring-style frequency patterns.
+Yet the verifier is still trained under a conventional supervised recipe: the training distribution is fixed by a manually chosen mixture of attacks and augmentations.
+When downstream conditions shift, the verifier must generalize from this fixed mixture.
+
+This work studies a complementary question:
+\emph{can the verifier itself be trained to adapt across downstream watermark verification tasks?}
+We treat each attack condition as a task and construct episodic verifier updates from support and query examples.
+During meta-training, the verifier first adapts on a support set sampled under one downstream transformation and is then optimized using the corresponding query set.
+This objective encourages model parameters that remain useful after task-specific adaptation, instead of parameters that only minimize the immediate supervised loss.
+In addition, we evaluate checkpoints across downstream attack sweeps and compare task-scheduling policies, using uniform sampling only as a minimal anchor and focusing the main benchmark on bandit scheduling, ATS-style adaptive task scheduling, BASS-style contextual bandits, and ASr-style adaptive sampling.
+
+The resulting framework, \emph{MetaSpiderMark}, preserves the original SpiderMark injection mechanism while replacing static verifier training with meta-learned verifier optimization.
+The central claim is therefore deliberately narrow and testable: meta-learning improves the robustness of the SpiderMark verifier under downstream transformations.
+This is different from claiming a new watermark pattern, a new diffusion generator, or a general-purpose meta-learning algorithm.
+It is an extension of SpiderMark focused on verifier generalization.
+
+Our preliminary evaluation already indicates that this framing is promising.
+Using the current downstream checkpoint sweep, the meta-learned verifier selected at epoch 116 improves mean accuracy over nine attacks from 0.8499 to 0.9182 and mean AUROC from 0.9293 to 0.9686 compared with the non-meta SpiderMark verifier.
+The improvement is consistent across all evaluated attacks, with particularly large gains under compound message-app processing, blur, and mixed augmentations.
+These results motivate a broader benchmark that compares not only against the original SpiderMark verifier, but also against strong task schedulers under matched attack episodes and compute budgets.
+
+The contributions of this paper draft are:
+\begin{itemize}
+    \item We formulate robust SpiderMark verifier training as an episodic meta-learning problem over downstream image transformations.
+    \item We introduce a meta-compatible SpiderMark verifier that retains frequency-domain inputs and PSNR/$\ell_1$ auxiliary cues while supporting inner-loop adaptation.
+    \item We define a benchmark that separates three sources of improvement: the SpiderMark watermark itself, meta-learned verifier initialization, and task scheduling during meta-training.
+    \item We report preliminary downstream attack results showing consistent gains over a non-meta verifier across nine transformations.
+\end{itemize}

@@ -1,0 +1,48 @@
+\section{Related work}
+\label{sec:rel_work}
+
+\textcolor{blue}{
+Watermarking AI‑generated content has become a critical area of research due to the rapid adoption of generative models and the concomitant concerns around provenance, copyright protection, and content authenticity. Recent work spans techniques that embed imperceptible signatures into the image generation process itself, as well as analyses of robustness under generative editing attacks. These and other class of methodologies are described next.}
+
+\textcolor{blue}{
+\paragraph{Embedded Watermarking in Generative Models:}
+Rezaei et al.\cite{rezaei2024lawa} propose LaWa, a watermarking framework that leverages the latent space of latent diffusion models (LDMs) to integrate watermarks during generation, achieving robustness across transformations while maintaining perceptual quality. This approach embeds signatures directly into generative pipelines rather than performing post‑hoc modifications, demonstrating improved resilience and low false positive rates compared to earlier methods. 
+A similar line of work focuses on embedding watermarks specifically within diffusion processes. Chen et al.~\cite{chen2025tagwm} introduce Dynamic Watermarks for diffusion models, using multi‑stage embedding that includes a fixed watermark in the model’s learned noise distribution and a dynamic, image‑adapted watermark decoded via a fine‑tuned neural decoder. This enables robust source verification with minimal visual impact. 
+}
+
+\textcolor{blue}{
+\paragraph{Frequency Transform - Fourier and Wavelets transform:}
+Two class of approaches have been proposed in frequency domain, namely discrete Discrete Fourier Transform (DFT) and Discrete Wavelet Transform (DWT). The {\it Discrete Fourier Transform} (DFT) has long been a fundamental tool in signal and image processing. More recently, several works~\cite{jia2023fourier,jiang2021focal, rao2021global, yu2022deep} have explored the use of DFT for image analysis, exploiting frequency-domain representations to enhance model performance and gain deeper insights into image characteristics. For instance, Baig~\cite{baig2022dft} employs DFT to globally assess the quality of blurred images, while Rao~\cite{radha2024deep} uses frequency analysis to capture global image properties. These studies demonstrate that DFT is particularly effective for extracting global information from images. 
+}
+
+\textcolor{blue}{
+Concerning DWT approaches, these class of methodologies processes signals and images by breaking them down into multiple frequency bands at varying spatial resolutions. This multi-scale decomposition makes DWT especially well suited for capturing localized details. Prior studies \cite{mohideen2008image,pimpalkhute2021digital} have successfully applied DWT to image denoising tasks. In particular, Tian~\cite{tian2023multi} highlights the benefit of DWT in jointly representing spatial and frequency information through multi-resolution analysis, which enables effective noise reduction and fine-grained image reconstruction. Moreover, several works~\cite{jang2024waterf, lou2024darenerf, rho2023masked, xu2023wavenerf} have demonstrated the strong compatibility between radiance field representations and wavelet-based analysis.
+}
+
+\textcolor{blue}{
+\paragraph{Steganography and Digital Watermarking:}
+Steganography is a technique used to preserve the confidentiality of information by embedding it imperceptibly within digital content. In recent years, there has been increasing interest in extending steganographic methods to radiance fields~\cite{biswal2024steganerv,dong2024stega4nerf, li2023steganerf}. For example, StegaNeRF~\cite{li2023steganerf} adapts pre-trained radiance field models to invisibly encode images within rendered outputs. In the context of 3D Gaussian Splatting, GS-Hider~\cite{zhang2024gs} achieves a similar goal by embedding 3D scenes and images unobtrusively within point cloud representations.
+}
+
+\textcolor{blue}{
+Digital watermarking is a technique for safeguarding digital content by asserting copyright ownership. Its key distinction from steganography lies in the embedding priority: watermarking focuses on robustness, ensuring the embedded information remains detectable even after modifications or distortions, whereas steganography emphasizes invisibility.
+To achieve robustness, classical watermarking approaches include~\cite{barni2001improved, raval2003discrete, shensa2002discrete,tao2004robust} often exploit the Discrete Wavelet Transform (DWT), embedding data into the wavelet subbands. However with the recent advances in deep learning a plethora of works have been available.
+To the best of our knowledge, the HiDDeN~\cite{zhu2018hidden} approach was the first first end-to-end deep watermarking framework that embedds resilient messages via a noise layer. Yoo et al.~\cite{yoo2022deep} introduced a new viewpoint by incorporating imperceptible watermarks into 3D representations using differentiable rendering frameworks, enabling watermark recovery from synthesized images. Building on this idea, subsequent methods such as CopyRNeRF~\cite{luo2023copyrnerf}, WateRF~\cite{jang2024waterf}, and NeRFProtector~\cite{song2024protecting} focus on embedding ownership information within NeRF models~\cite{mildenhall2021nerf}. 
+In particular, CopyRNeRF~\cite{luo2023copyrnerf} modifies color encodings, whereas WateRF~\cite{jang2024waterf} and NeRFProtector~\cite{song2024protecting} inject watermark signals directly into the network parameters through optimization-based strategies. More recently, Song et al.~\cite{song2024geometry} addressed copyright protection by restricting unauthorized 3D reconstruction using Triplane Gaussian Splatting (TGS)~\cite{zou2024triplane}. Zhang et al. [66] proposed a steganographic approach for 3D Gaussian Splatting that substitutes spherical harmonic features with secure representations and jointly trains scene and message decoders to recover rendered views and hidden content. Other recent approaches [13, 15] attempt to encode information directly into 3DGS models by leveraging pre-trained 2D watermarking decoders. However, due to the intrinsic trade-off between embedding capacity and visual fidelity in 2D watermarking techniques, relying on such decoders during optimization can limit the achievable payload. Additionally, these methods [13, 15] may induce substantial modifications to the underlying 3D geometry, which can negatively affect reconstruction quality.
+}
+
+
+\textcolor{blue}{
+In this work, we propose a robust digital watermarking scheme specifically designed for 3D Gaussian Splatting (3D-GS), combining high resilience with minimal impact on visual quality. While many recent contributions embed watermarks within generative models, most focus on latent representation manipulation (e.g., LaWa), dynamic multi‑stage embedding (e.g., Dynamic Watermarks), or tamper‑aware techniques (e.g., TAG‑WM) for diffusion models. SpiderMark differentiates itself by proposing a truly hybrid watermarking framework that couples algorithmic injection with learning‑based verification, providing a novel combination of imperceptibility, robustness, and verification efficiency not fully addressed by existing methods. (PLEASE CONFIRM)}
+
+%\paragraph{Robustness and Tamper Awareness:}
+%Tamper‑aware watermarking approach have also been proposed.  
+%Tamper‑aware watermarking (TAG‑WM)~\cite{chen2025tagwm} embeds dual watermarks for both copyright and localization purposes. By exploiting diffusion inversion sensitivity, the method detects tampered regions and preserves watermark integrity under a range of distortions. 
+%Xu et al. present InvisMark, a recent technique embedding invisible and robust watermarks for AI‑generated images. Their method combines advanced network architectures with training strategies to maximize imperceptibility and robustness, achieving high decoding accuracy and significant payload capacity even under image manipulations. 
+%\paragraph{Undetectable and Latent Watermarks:}
+%Another line of inquiry studies watermark schemes that provably minimize detectability. Gunn et al. propose an “undetectable” watermarking approach for generative image models based on pseudorandom error‑correcting codes applied to the initial latent vectors of diffusion sampling. The resulting watermarks do not degrade perceptual image quality and resist existing removal attacks better than prior techniques. 
+%\paragraph{Vulnerabilities and Attacks:}
+%Recent studies also highlight limitations of current watermarking schemes. For example, works on diffusion‑based editing demonstrate that iterative noising and denoising can effectively erode state‑of‑the‑art invisible watermarks designed to survive traditional perturbations, revealing vulnerabilities in watermark resilience under powerful generative editing attacks. 
+
+
+

@@ -1,0 +1,12 @@
+\section{Conclusion}
+
+This paper introduced \textit{SpiderMark}, a structured watermarking framework for diffusion-based image generation that embeds a fixed geometric pattern directly into the noise initialization stage in the frequency domain. Unlike prior approaches that rely on handcrafted similarity metrics or rigid frequency ring structures, SpiderMark unifies watermark injection and probabilistic verification into a single framework that remains fully compatible with pretrained diffusion models and does not require modifying model weights.
+
+Extensive evaluations demonstrate that the proposed verifier substantially outperforms PSNR-based detection across a wide range of photometric, geometric, and mixed distortions. By learning watermark-consistent frequency cues rather than relying on pixel-level alignment, SpiderMark maintains reliable performance under compression, resampling, occlusion, and spatial warping. Ablation studies further show that conditioning the verifier on the watermark pattern and mask improves robustness in most settings while preserving image quality.
+
+Crucially, the verifier generalises effectively beyond its training distribution. Despite being trained solely on images generated from the Stable Diffusion prompt dataset, SpiderMark achieves strong verification performance on the unseen COCO dataset without retraining, indicating that the learned features are not dataset- or prompt-specific. Semantic evaluation using CLIP similarity and perceptual assessment via FID confirm that watermark robustness is achieved without compromising image quality or semantic fidelity.
+
+Beyond empirical performance, this work highlights important evaluation considerations for practical watermarking systems. In particular, we demonstrate that threshold-free metrics such as AUROC can be misleading under deployment constraints, and that calibrated, threshold-aware verification provides a more reliable measure of real-world robustness.
+
+Overall, SpiderMark provides a practical and generalisable solution for content attribution in diffusion-based generative models. Future work may extend this framework to multimodal generation pipelines, investigate adaptive or content-aware watermarking strategies, and explore robustness against more extreme geometric or adversarial transformations.
+

@@ -137,11 +137,42 @@ class Attacker:
         return img
 
 
+def jpeg_compress_pil(img: Image.Image, quality: int = 85):
+    buf = io.BytesIO()
+    img.save(buf, format="JPEG", quality=quality, optimize=True)
+    buf.seek(0)
+    return Image.open(buf).convert("RGB")
+
+
+class RandomJPEG:
+    def __init__(self, p=0.5, q_range=(60, 95)):
+        self.p = p
+        self.q_range = q_range
+
+    def __call__(self, img):
+        if random.random() < self.p:
+            q = random.randint(self.q_range[0], self.q_range[1])
+            return jpeg_compress_pil(img, q)
+        return img
+
+
+class RandomGaussianNoise:
+    def __init__(self, p=0.5, std=0.01):
+        self.p = p
+        self.std = std
+
+    def __call__(self, img):
+        if random.random() < self.p:
+            arr = np.array(img).astype(np.float32) / 255.0
+            noise = np.random.normal(0, self.std, arr.shape).astype(np.float32)
+            arr = np.clip(arr + noise, 0.0, 1.0)
+            img2 = Image.fromarray((arr * 255).astype(np.uint8))
+            return img2
+        return img
+
 
 from torchvision import transforms
-from ds import RandomGaussianNoise, RandomJPEG
 from PIL import ImageFilter
-
 
 # 1. No attack (identity transform / just resize to model input size)
 def make_clean_aug(IMAGE_SIZE):

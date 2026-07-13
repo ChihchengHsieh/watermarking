@@ -1,0 +1,8 @@
+\section{Conclusion}
+\label{sec:conclusion}
+
+This paper draft extends SpiderMark from a static learned verifier to a meta-learned verifier trained over downstream attack episodes.
+The approach keeps the original SpiderMark watermark injection mechanism while changing how the verifier learns to generalize across perturbations and checkpoints.
+Preliminary results show consistent gains over a non-meta verifier across nine transformations, suggesting that verifier training strategy is a key component of robust diffusion watermarking.
+The next step is a controlled scheduler benchmark that evaluates uniform sampling, UCB bandits, ATS-style adaptive scheduling, BASS-style contextual bandits, and ASr-style adaptive sampling under matched attacks, checkpoint rules, and compute budgets.
+After the scheduler comparison is stable, a fixed-scheduler SOTA/canonical meta-learning comparison should evaluate FOMAML, MAML, ANIL, Reptile, Matching Networks, Prototypical Networks, and an R2D2-style ridge solver.

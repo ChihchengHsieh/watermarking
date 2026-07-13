@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import random
 from pathlib import Path
 import numpy as np
@@ -9,6 +11,10 @@ import io
 import os
 from PIL import ImageFilter
 
+from dataclasses import dataclass
+from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
+
+from attack import make_blur_aug, make_clean_aug, make_down_up_attack, make_jpeg_aug, make_msg_app_combo, make_occlusion_block, make_random_crop_attack
 
 # ---------------- helper to collect files and labels ----------------
 def discover_dataset_files(data_dir: str):
@@ -76,90 +82,57 @@ def discover_dataset_files(data_dir: str):
     )
 
 
-def jpeg_compress_pil(img: Image.Image, quality: int = 85):
-    buf = io.BytesIO()
-    img.save(buf, format="JPEG", quality=quality, optimize=True)
-    buf.seek(0)
-    return Image.open(buf).convert("RGB")
 
+# def make_train_image_augmentations_deprecated(IMAGE_SIZE):
+#     # Compose PIL-based augmentations (randomly applied)
+#     aug_list = []
+#     # random rotation small
+#     aug_list.append(
+#         transforms.RandomApply([transforms.RandomRotation(degrees=15)], p=0.5)
+#     )
+#     # random resized crop (sometimes)
+#     aug_list.append(
+#         transforms.RandomApply(
+#             [transforms.RandomResizedCrop(IMAGE_SIZE, scale=(0.7, 1.0))], p=0.6
+#         )
+#     )
+#     # horizontal flip
+#     aug_list.append(transforms.RandomHorizontalFlip(p=0.5))
+#     # color jitter
+#     aug_list.append(
+#         transforms.RandomApply([transforms.ColorJitter(0.2, 0.2, 0.1, 0.05)], p=0.6)
+#     )
+#     # JPEG
+#     aug_list.append(RandomJPEG(p=0.3, q_range=(60, 95)))
+#     # RandAugment (if torchvision supports it) - wrapped
+#     try:
+#         from torchvision.transforms import RandAugment
 
-class RandomJPEG:
-    def __init__(self, p=0.5, q_range=(60, 95)):
-        self.p = p
-        self.q_range = q_range
+#         aug_list.append(transforms.RandomApply([RandAugment()], p=0.25))
+#     except Exception:
+#         pass
 
-    def __call__(self, img):
-        if random.random() < self.p:
-            q = random.randint(self.q_range[0], self.q_range[1])
-            return jpeg_compress_pil(img, q)
-        return img
+#     # Gaussian blur sometimes
+#     aug_list.append(
+#         transforms.RandomApply(
+#             [
+#                 lambda img: img.filter(
+#                     ImageFilter.GaussianBlur(radius=random.uniform(0.1, 1.8))
+#                 )
+#             ],
+#             p=0.25,
+#         )
+#     )
+#     # Add gaussian pixel noise sometimes
+#     aug_list.append(RandomGaussianNoise(p=0.25, std=0.02))
+#     # brightness jitter more finely (RandomApply)
+#     aug_list.append(
+#         transforms.RandomApply([transforms.ColorJitter(brightness=(0.8, 1.2))], p=0.5)
+#     )
 
-
-class RandomGaussianNoise:
-    def __init__(self, p=0.5, std=0.01):
-        self.p = p
-        self.std = std
-
-    def __call__(self, img):
-        if random.random() < self.p:
-            arr = np.array(img).astype(np.float32) / 255.0
-            noise = np.random.normal(0, self.std, arr.shape).astype(np.float32)
-            arr = np.clip(arr + noise, 0.0, 1.0)
-            img2 = Image.fromarray((arr * 255).astype(np.uint8))
-            return img2
-        return img
-
-
-def make_train_image_augmentations_deprecated(IMAGE_SIZE):
-    # Compose PIL-based augmentations (randomly applied)
-    aug_list = []
-    # random rotation small
-    aug_list.append(
-        transforms.RandomApply([transforms.RandomRotation(degrees=15)], p=0.5)
-    )
-    # random resized crop (sometimes)
-    aug_list.append(
-        transforms.RandomApply(
-            [transforms.RandomResizedCrop(IMAGE_SIZE, scale=(0.7, 1.0))], p=0.6
-        )
-    )
-    # horizontal flip
-    aug_list.append(transforms.RandomHorizontalFlip(p=0.5))
-    # color jitter
-    aug_list.append(
-        transforms.RandomApply([transforms.ColorJitter(0.2, 0.2, 0.1, 0.05)], p=0.6)
-    )
-    # JPEG
-    aug_list.append(RandomJPEG(p=0.3, q_range=(60, 95)))
-    # RandAugment (if torchvision supports it) - wrapped
-    try:
-        from torchvision.transforms import RandAugment
-
-        aug_list.append(transforms.RandomApply([RandAugment()], p=0.25))
-    except Exception:
-        pass
-
-    # Gaussian blur sometimes
-    aug_list.append(
-        transforms.RandomApply(
-            [
-                lambda img: img.filter(
-                    ImageFilter.GaussianBlur(radius=random.uniform(0.1, 1.8))
-                )
-            ],
-            p=0.25,
-        )
-    )
-    # Add gaussian pixel noise sometimes
-    aug_list.append(RandomGaussianNoise(p=0.25, std=0.02))
-    # brightness jitter more finely (RandomApply)
-    aug_list.append(
-        transforms.RandomApply([transforms.ColorJitter(brightness=(0.8, 1.2))], p=0.5)
-    )
-
-    # final: ensure image is resized to IMAGE_SIZE (if not already)
-    final = transforms.Compose([transforms.Resize((IMAGE_SIZE, IMAGE_SIZE)), *aug_list])
-    return final
+#     # final: ensure image is resized to IMAGE_SIZE (if not already)
+#     final = transforms.Compose([transforms.Resize((IMAGE_SIZE, IMAGE_SIZE)), *aug_list])
+#     return final
 
 
 def get_test_aug(image_size):
@@ -338,7 +311,7 @@ class WatermarkOnTheFlyDataset(Dataset):
 
         # convert to tensor and to device/dtype for pipe
         tsr_img = transform_img(img_aug).unsqueeze(0)  # (1,C,H,W)
-        # move to correct dtype & device for the unet/vae as the user did earlier:
+        # move to corr`ect dtype & device for the unet/vae as the user did earlier:
         target_dtype = next(self.pipe.unet.parameters()).dtype
         tsr_img = tsr_img.to(dtype=target_dtype, device=self.device)
 
@@ -419,3 +392,400 @@ class WatermarkOnTheFlyDataset(Dataset):
             )
 
         return fft_ch, torch.tensor(label, dtype=torch.long)
+
+
+
+
+
+
+import random
+from dataclasses import dataclass
+from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
+
+import torch
+from torch.utils.data import Dataset
+
+
+
+@dataclass(frozen=True)
+class AttackTask:
+    """One meta-learning task = one augmentation / attack family."""
+    name: str
+    image_aug: Optional[Callable] = None  # PIL -> PIL (or compatible)
+    image_aug_prob: float = 1.0           # set 1.0 so the task is deterministic
+
+
+def build_meta_attack_tasks(
+    image_size: int,
+    task_names: Optional[Union[str, Sequence[str]]] = None,
+) -> List[AttackTask]:
+    """
+    Build the candidate task pool for meta-training.
+
+    task_names:
+      - None or "default": clean + downup50 + crop + jpeg
+      - "all": every registered attack task
+      - sequence of names: explicit task pool in that order
+    """
+    registry = {
+        "clean": AttackTask(
+            name="clean",
+            image_aug=make_clean_aug(image_size),
+            image_aug_prob=1.0,
+        ),
+        "downup50": AttackTask(
+            name="downup50",
+            image_aug=make_down_up_attack(image_size, downscale_frac=0.5),
+            image_aug_prob=1.0,
+        ),
+        "crop": AttackTask(
+            name="crop",
+            image_aug=make_random_crop_attack(image_size, scale=(0.5, 0.9)),
+            image_aug_prob=1.0,
+        ),
+        "jpeg": AttackTask(
+            name="jpeg",
+            image_aug=make_jpeg_aug(image_size),
+            image_aug_prob=1.0,
+        ),
+        "blur": AttackTask(
+            name="blur",
+            image_aug=make_blur_aug(image_size),
+            image_aug_prob=1.0,
+        ),
+        "msg_app": AttackTask(
+            name="msg_app",
+            image_aug=make_msg_app_combo(image_size),
+            image_aug_prob=1.0,
+        ),
+        "occlusion": AttackTask(
+            name="occlusion",
+            image_aug=make_occlusion_block(image_size, box_frac=0.25),
+            image_aug_prob=1.0,
+        ),
+    }
+
+    default_names = ["clean", "downup50", "crop", "jpeg"]
+    if task_names is None or task_names == "default":
+        names = default_names
+    elif task_names == "all":
+        names = list(registry.keys())
+    else:
+        names = list(task_names)
+
+    unknown = [name for name in names if name not in registry]
+    if unknown:
+        raise ValueError(
+            f"Unknown meta attack task(s): {unknown}. "
+            f"Available tasks: {list(registry.keys())}"
+        )
+    return [registry[name] for name in names]
+
+
+def _to_sample_dict(sample: Tuple) -> Dict[str, Any]:
+    """
+    Convert outputs from WatermarkOnTheFlyDataset into a unified dict.
+
+    Your base dataset returns one of:
+      (x, y) or (x, psnr, l1, y)
+
+    Returns:
+      {"x": x_tensor, "y": y_tensor, "extra": {...}}
+    """
+    if not isinstance(sample, (tuple, list)):
+        raise TypeError(f"Expected tuple/list from base dataset, got {type(sample)}")
+
+    if len(sample) == 2:
+        x, y = sample
+        extra = {}
+    elif len(sample) == 4:
+        x, psnr, l1, y = sample
+        extra = {"psnr": psnr, "l1": l1}
+    else:
+        raise ValueError(f"Unexpected base dataset return length: {len(sample)}")
+
+    if not torch.is_tensor(x):
+        raise TypeError(f"x must be a Tensor, got {type(x)}")
+    if not torch.is_tensor(y):
+        raise TypeError(f"y must be a Tensor, got {type(y)}")
+
+    return {"x": x, "y": y, "extra": extra}
+
+
+def _collate_samples(samples: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """
+    Stack list of {"x","y","extra"} into one batch dict.
+    """
+    xs = torch.stack([s["x"] for s in samples], dim=0)               # [B, ...]
+    ys = torch.stack([s["y"] for s in samples], dim=0).long()        # [B]
+
+    # extras: stack tensors if present
+    extra: Dict[str, Any] = {}
+    keys = set()
+    for s in samples:
+        keys |= set(s["extra"].keys())
+
+    for k in keys:
+        vals = [s["extra"].get(k, None) for s in samples]
+        if all(v is None for v in vals):
+            continue
+        if torch.is_tensor(vals[0]):
+            extra[k] = torch.stack(vals, dim=0)
+        else:
+            extra[k] = vals
+
+    return {"x": xs, "y": ys, "extra": extra}
+
+
+import random
+import torch
+from torch.utils.data import Dataset
+
+
+class WatermarkMetaTaskDataset(Dataset):
+    def __init__(
+        self,
+        ds,                      # base WatermarkOnTheFlyDataset
+        tasks,                   # List[AttackTask]
+        n_support: int,
+        n_query: int,
+        tasks_per_epoch: int = 200,
+        seed: int = 0,
+        task_sampling: str = "uniform",
+        residual_agent=None,
+        residual_base_sampling: str = "uniform",
+        residual_config: Optional[Dict[str, Any]] = None,
+    ):
+        self.ds = ds
+        self.tasks = list(tasks)
+        if len(self.tasks) == 0:
+            raise ValueError("WatermarkMetaTaskDataset requires at least one task.")
+        self.n_support = int(n_support)
+        self.n_query = int(n_query)
+        self.tasks_per_epoch = int(tasks_per_epoch)
+        self.task_sampling = task_sampling
+        self.rng = random.Random(seed)
+        self.residual_base_sampling = residual_base_sampling
+        self.residual_agent = residual_agent
+        self._last_residual_info = None
+        self._scheduler_controller_modes = {
+            "hard_task",
+            "progress",
+            "bandit_ucb",
+            "bandit_thompson",
+            "ats",
+            "bass",
+            "asr",
+            "derts_proxy",
+            "gcp_proxy",
+        }
+
+        if self.task_sampling in ("residual", "llm_residual") and self.residual_agent is None:
+            from residual_agent import (
+                LLMResidualTaskController,
+                LLMTaskControllerConfig,
+                ResidualTaskController,
+                ResidualTaskControllerConfig,
+            )
+
+            if self.task_sampling == "llm_residual":
+                cfg = LLMTaskControllerConfig(seed=seed, **(residual_config or {}))
+                self.residual_agent = LLMResidualTaskController(
+                    num_tasks=len(self.tasks),
+                    task_names=[task.name for task in self.tasks],
+                    config=cfg,
+                )
+            else:
+                cfg = ResidualTaskControllerConfig(
+                    seed=seed,
+                    **(residual_config or {}),
+                )
+                self.residual_agent = ResidualTaskController(
+                    num_tasks=len(self.tasks),
+                    task_names=[task.name for task in self.tasks],
+                    config=cfg,
+                )
+        elif self.task_sampling in self._scheduler_controller_modes and self.residual_agent is None:
+            from scheduler_baselines import (
+                BaselineSchedulerConfig,
+                BaselineTaskSchedulerController,
+            )
+
+            scheduler_config = dict(residual_config or {})
+            scheduler_config.pop("mode", None)
+            cfg = BaselineSchedulerConfig(
+                mode=self.task_sampling,
+                seed=seed,
+                **scheduler_config,
+            )
+            self.residual_agent = BaselineTaskSchedulerController(
+                num_tasks=len(self.tasks),
+                task_names=[task.name for task in self.tasks],
+                config=cfg,
+            )
+
+    def __len__(self):
+        return self.tasks_per_epoch
+
+    def _choose_task_id(self, idx: int) -> int:
+        if self.task_sampling == "cycle":
+            return idx % len(self.tasks)
+        if self.task_sampling == "uniform":
+            return self.rng.randrange(len(self.tasks))
+        if self.task_sampling in ("residual", "llm_residual"):
+            if self.residual_agent is None:
+                raise RuntimeError(
+                    f"task_sampling={self.task_sampling!r} requires residual_agent."
+                )
+
+            base_mode = self.residual_base_sampling
+            cycle_idx = idx % len(self.tasks)
+            base_weights = self.residual_agent.base_weights(base_mode, cycle_idx)
+            task_id, info = self.residual_agent.sample(base_weights)
+            self._last_residual_info = info
+            return task_id
+        if self.task_sampling in self._scheduler_controller_modes:
+            if self.residual_agent is None:
+                raise RuntimeError(
+                    f"task_sampling={self.task_sampling!r} requires a scheduler controller."
+                )
+            task_id, info = self.residual_agent.sample()
+            self._last_residual_info = info
+            return task_id
+        raise ValueError(
+            "Unknown task_sampling="
+            f"{self.task_sampling!r}; expected uniform, cycle, hard_task, progress, "
+            "bandit_ucb, bandit_thompson, ats, bass, asr, derts_proxy, "
+            "gcp_proxy, residual, or llm_residual."
+        )
+
+    def update_task_feedback(
+        self,
+        task_id: int,
+        *,
+        loss: Optional[float] = None,
+        val_gain: Optional[float] = None,
+        fail_rate: Optional[float] = None,
+        reward: Optional[float] = None,
+    ) -> Optional[float]:
+        """
+        Feed downstream meta-training feedback to the residual controller.
+
+        Existing training code can call this after query/outer loss is known:
+            meta_ds.update_task_feedback(task_id, loss=float(outer_loss))
+
+        No-op unless task_sampling uses a residual controller or a residual_agent was supplied.
+        """
+        if self.residual_agent is None:
+            return None
+        return self.residual_agent.update(
+            task_id,
+            loss=loss,
+            val_gain=val_gain,
+            fail_rate=fail_rate,
+            reward=reward,
+        )
+
+    def update_task_feedback_from_batch(
+        self,
+        task_batch: Dict[str, Any],
+        *,
+        loss: Optional[float] = None,
+        val_gain: Optional[float] = None,
+        fail_rate: Optional[float] = None,
+        reward: Optional[float] = None,
+    ) -> Optional[float]:
+        task_id = task_batch.get("task_id")
+        if torch.is_tensor(task_id):
+            task_id = int(task_id.view(-1)[0].item())
+        elif isinstance(task_id, (list, tuple)):
+            task_id = int(task_id[0])
+        else:
+            task_id = int(task_id)
+        return self.update_task_feedback(
+            task_id,
+            loss=loss,
+            val_gain=val_gain,
+            fail_rate=fail_rate,
+            reward=reward,
+        )
+
+    def residual_snapshot(self) -> Optional[Dict[str, Any]]:
+        if self.residual_agent is None:
+            return None
+        return self.residual_agent.snapshot()
+
+    def update_residual_global_context(self, **kwargs) -> None:
+        if self.residual_agent is None:
+            return None
+        update_fn = getattr(self.residual_agent, "update_global_context", None)
+        if update_fn is None:
+            return None
+        return update_fn(**kwargs)
+
+    def _sample_indices(self, k: int):
+        n = len(self.ds)
+        if k <= n:
+            return self.rng.sample(range(n), k)
+        return [self.rng.randrange(n) for _ in range(k)]
+
+    def _pack(self, samples):
+        xs, ys = [], []
+        extra = {}
+
+        for s in samples:
+            if len(s) == 2:
+                x, y = s
+            elif len(s) == 4:
+                x, psnr, l1, y = s
+                extra.setdefault("psnr", []).append(psnr)
+                extra.setdefault("l1", []).append(l1)
+            else:
+                raise ValueError(f"Unexpected sample format: len={len(s)}")
+
+            xs.append(x)
+            ys.append(y)
+
+        out = {
+            "x": torch.stack(xs, 0),
+            "y": torch.stack(ys, 0).long().view(-1),
+        }
+        if extra:
+            out["extra"] = {k: torch.stack(v, 0).view(-1) for k, v in extra.items()}
+        return out
+
+    def __getitem__(self, idx):
+        # choose task
+        task_id = self._choose_task_id(idx)
+        task = self.tasks[task_id]
+
+        # save old aug settings
+        old_aug = getattr(self.ds, "image_aug", None)
+        old_prob = getattr(self.ds, "image_aug_prob", None)
+
+        # IMPORTANT: set task-specific aug
+        self.ds.image_aug = task.image_aug
+        self.ds.image_aug_prob = float(task.image_aug_prob)
+
+        try:
+            total = self.n_support + self.n_query
+            inds = self._sample_indices(total)
+            s_inds = inds[: self.n_support]
+            q_inds = inds[self.n_support :]
+
+            support_samples = [self.ds[i] for i in s_inds]
+            query_samples   = [self.ds[i] for i in q_inds]
+
+            out = {
+                "support": self._pack(support_samples),
+                "query": self._pack(query_samples),
+                "task_name": task.name,
+                "task_id": task_id,
+            }
+            if self.task_sampling in ("residual", "llm_residual") or self.task_sampling in self._scheduler_controller_modes:
+                out["scheduler_info"] = self._last_residual_info
+            return out
+        finally:
+            # restore (CRITICAL)
+            self.ds.image_aug = old_aug
+            self.ds.image_aug_prob = old_prob

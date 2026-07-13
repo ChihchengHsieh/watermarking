@@ -1,0 +1,2 @@
+global_step,step_time_sec,meta_loss,grad_norm,tasks
+1,7.4927,0.523460,63.714226,clean

@@ -1,0 +1,5 @@
+"method","family","meta_learning","scheduler","checkpoint_rule","num_attacks","mean_accuracy","mean_auroc"
+"MetaSpiderMark-epoch110","MetaSpiderMark verifier","yes","llm_residual","epoch110","9","0.907555555555556","0.966176581288009"
+"MetaSpiderMark-epoch116","MetaSpiderMark verifier","yes","llm_residual","epoch116","9","0.918222222222222","0.968625027237971"
+"MetaSpiderMark-final","MetaSpiderMark verifier","yes","llm_residual","final","9","0.895851851851852","0.954462074840039"
+"SpiderMark-no-meta","SpiderMark verifier","no","none","existing_final","9","0.849925925925926","0.929255759592718"
