@@ -3,7 +3,7 @@
 
 \subsection{Current Evidence}
 
-We first summarize the current downstream checkpoint sweep that motivated this paper.
+We first summarize the current downstream checkpoint sweep that motivated the agentic scheduler design.
 The non-meta baseline is the improved SpiderMark verifier, and the meta-learning result uses the downstream meta checkpoint selected by validation accuracy at epoch 116.
 Both rows are computed from the repository's attack-evaluation summaries; the exact artifact paths are recorded in the experiment notes rather than printed in the main text.
 Table~\ref{tab:stage1_generated_meta_vs_nometa} reports accuracy and AUROC under nine transformations.
@@ -12,35 +12,36 @@ Table~\ref{tab:stage1_generated_meta_vs_nometa} reports accuracy and AUROC under
 
 The meta-learned verifier improves accuracy on every listed attack.
 The largest gain is on \texttt{msg\_app\_combo}, a compound transformation intended to emulate common messaging-app degradation.
-This suggests that episodic exposure to downstream tasks can improve verifier stability under transformations that are difficult for a static supervised verifier.
+This suggests that episodic exposure to downstream tasks can improve verifier stability under transformations that are difficult for a static supervised verifier, motivating the need to schedule those episodes intelligently.
 
 \subsection{Meta-Training Diagnostics}
 
 The current repository also contains diagnostics from a 2000-step meta-training run over seven candidate attack tasks: clean, down-up sampling, crop, JPEG, blur, message-app processing, and occlusion.
-These artifacts are not yet treated as final scheduler benchmark evidence, but they are useful for understanding the training dynamics and for deciding what to benchmark next.
-Figure~\ref{fig:training_diagnostics} summarizes the meta-loss trajectory, sampled task distribution, and residual task-weight corrections proposed by the LLM scheduler.
+These artifacts are not yet treated as final scheduler benchmark evidence, but they are useful for understanding the closed-loop signals available to the agentic scheduler.
+Figure~\ref{fig:training_diagnostics} summarizes the meta-loss trajectory, sampled task distribution, and residual task-weight corrections proposed by the agentic scheduler.
 
 \begin{figure*}[t]
     \centering
-    \begin{subfigure}[t]{0.32\textwidth}
+    \begin{subfigure}[t]{0.48\textwidth}
         \centering
         \includegraphics[width=\linewidth]{figures/meta_loss_curve.png}
         \caption{Meta-loss curve}
     \end{subfigure}
     \hfill
-    \begin{subfigure}[t]{0.32\textwidth}
+    \begin{subfigure}[t]{0.48\textwidth}
         \centering
         \includegraphics[width=\linewidth]{figures/sampled_task_distribution.png}
         \caption{Sampled tasks}
     \end{subfigure}
-    \hfill
-    \begin{subfigure}[t]{0.32\textwidth}
+    \vspace{0.6em}
+
+    \begin{subfigure}[t]{0.68\textwidth}
         \centering
         \includegraphics[width=\linewidth]{figures/llm_delta_heatmap.png}
         \caption{LLM residual deltas}
     \end{subfigure}
     \caption{\textbf{Available meta-training diagnostics.}
-    These plots show that the current implementation logs optimization behavior, task exposure, and scheduler corrections during meta-training.
+    These plots show that the current implementation logs optimization behavior, task exposure, and agentic scheduler corrections during meta-training.
     They should be used as diagnostic evidence and sanity checks; the final paper still requires controlled scheduler baselines under matched compute budgets.}
     \label{fig:training_diagnostics}
 \end{figure*}
@@ -48,7 +49,7 @@ Figure~\ref{fig:training_diagnostics} summarizes the meta-loss trajectory, sampl
 \subsection{Available Proposed-Method Checkpoint}
 
 In addition to the validation-selected checkpoint in Table~\ref{tab:stage1_generated_meta_vs_nometa}, the current notebook sweep evaluates the final 2000-step downstream meta checkpoint.
-This checkpoint is useful as the proposed-method row for the scheduler benchmark because it is already evaluated on the same nine downstream attacks.
+This checkpoint is useful as the current agentic-scheduler row for the scheduler benchmark because it is already evaluated on the same nine downstream attacks.
 Table~\ref{tab:current_final_checkpoint_summary} summarizes the final-checkpoint aggregate numbers from the notebook artifact.
 
 \begin{table}[t]
@@ -70,29 +71,57 @@ AUROC & 0.9545 & 0.8389 \\
 
 The final evaluation is organized around two complementary questions.
 First, does episodic verifier training improve SpiderMark robustness over a non-meta verifier?
-Second, under matched verifier architecture, attack pool, support/query sizes, and 2000-step training budget, which task scheduler provides the strongest downstream robustness?
+Second, under matched verifier architecture, attack pool, support/query sizes, and 2000-step training budget, does the agentic AI scheduler outperform non-agentic task schedulers?
 Uniform sampling serves as a minimal anchor, while cyclic scheduling is kept as an optional diagnostic rather than a main compute target.
-The scheduler benchmark compares non-contextual UCB bandits, ATS-style adaptive task scheduling, BASS-style contextual bandits, and ASR-style adaptive sampling.
-A GCP-style task-weighting proxy is included as an appendix candidate because its original class-combination setting does not map exactly to our attack-task pool.
+The scheduler benchmark compares the proposed agentic scheduler against non-contextual UCB bandits~\cite{auer2002finite}, ATS-style adaptive task scheduling~\cite{yao2021ats}, BASS-style contextual bandits~\cite{ban2023bass}, and Adaptive Sampler-style task sampling~\cite{wang2024tasksampler}.
+A GCP-style task-weighting proxy~\cite{liu2020adaptive} is included as an appendix candidate because its original class-combination setting does not map exactly to our attack-task pool.
 DERTS remains an important future baseline, but a faithful implementation requires full task-pool gradient subset optimization rather than the scalar online feedback currently available in the training loop.
+All rows in the main scheduler table use the same 2000-step budget; the table therefore reports only downstream accuracy.
+
+\paragraph{Scheduler benchmark setup.}
+All scheduler rows use the same SpiderMark verifier architecture, optimizer settings, first-order meta-learning update, and attack-task interface.
+The training task pool contains seven attack conditions: clean images, down-up resampling, crop, JPEG compression, blur, message-app processing, and occlusion.
+Each meta-training step samples one attack task, constructs an attack-conditioned support/query episode with $n_s=16$ support examples and $n_q=16$ query examples, performs the support adaptation, and updates the verifier using query loss.
+Unless otherwise stated, each scheduler is trained for 2000 meta-training steps with the same checkpointing rule and evaluated only after all selected scheduler checkpoints are complete.
+
+For the proposed row, the agentic scheduler receives the compact JSON state described in Sec.~\ref{sec:method} every 100 meta-training steps.
+The agent outputs residual task corrections rather than absolute sampling probabilities.
+The local controller clips each correction to the configured residual range, enforces a minimum task probability, normalizes the distribution, and logs the final task weights, rationale, latency, and any fallback event.
+This ensures that the comparison tests agentic task selection while keeping the verifier update, attack pool, and compute budget fixed.
+
+\paragraph{Evaluation protocol.}
+Every trained scheduler checkpoint is evaluated with the same downstream attack suite used in the current checkpoint sweep: clean, strong JPEG, message-app compound processing, down-up resampling, blur, random crop, occlusion, geometric warp, and the mixed training augmentation.
+The main scheduler table reports per-attack accuracy and mean accuracy.
+We additionally retain AUROC, threshold statistics, scheduler traces, and runtime overhead in the benchmark artifacts so that the final paper can report stability and operating-threshold behavior when all rows are complete.
 
 \begin{table*}[t]
 \centering
-\small
-\caption{Planned scheduler benchmark table. Blank cells denote runs that are not yet trained and evaluated under the matched 2000-step budget. The proposed-method row uses the already available final-checkpoint notebook evaluation.}
+\scriptsize
+\setlength{\tabcolsep}{3.5pt}
+\caption{Scheduler benchmark table reporting accuracy by downstream attack. Blank cells denote scheduler rows that are not yet evaluated under the matched 2000-step budget. The proposed agentic row uses the currently evaluated final checkpoint.}
 \label{tab:scheduler_benchmark_skeleton}
 \resizebox{\textwidth}{!}{
-\begin{tabular}{llcccccc}
+\begin{tabular}{lcccccccccc}
 \toprule
-\textbf{Method} & \textbf{Scheduler family} & \textbf{Mean Acc.} & \textbf{Worst Acc.} & \textbf{Mean AUROC} & \textbf{Worst AUROC} & \textbf{Train steps} & \textbf{Status} \\
+\textbf{Method} & \textbf{Clean} & \textbf{JPEG} & \textbf{Msg.} & \textbf{Down-up} & \textbf{Blur} & \textbf{Crop} & \textbf{Occ.} & \textbf{Warp} & \textbf{Mix} & \textbf{Mean} \\
 \midrule
-Uniform & random anchor &  &  &  &  & 2000 & checkpoint ready, eval pending \\
-Bandit-UCB & non-contextual bandit &  &  &  &  & 2000 & training \\
-ATS-style~\cite{yao2021ats} & adaptive task scheduler &  &  &  &  & 2000 & queued \\
-BASS-style~\cite{ban2023bass} & contextual neural bandit principle &  &  &  &  & 2000 & queued \\
-ASR-style & diversity/entropy/difficulty sampler &  &  &  &  & 2000 & queued \\
-GCP-style proxy & exponential task weighting &  &  &  &  & 2000 & optional appendix \\
-\textbf{MetaSpiderMark} & proposed verifier training & \textbf{0.8959} & \textbf{0.7480} & \textbf{0.9545} & \textbf{0.8389} & 2000 & evaluated \\
+Uniform &  &  &  &  &  &  &  &  &  &  \\
+Bandit-UCB~\cite{auer2002finite} &  &  &  &  &  &  &  &  &  &  \\
+ATS-style~\cite{yao2021ats} &  &  &  &  &  &  &  &  &  &  \\
+BASS-style~\cite{ban2023bass} &  &  &  &  &  &  &  &  &  &  \\
+Adaptive Sampler-style~\cite{wang2024tasksampler} &  &  &  &  &  &  &  &  &  &  \\
+GCP-style proxy~\cite{liu2020adaptive} &  &  &  &  &  &  &  &  &  &  \\
+\textbf{Agentic AI scheduler (ours)}
+& \textbf{0.9467}
+& \textbf{0.9253}
+& \textbf{0.8973}
+& \textbf{0.9467}
+& \textbf{0.9347}
+& \textbf{0.8573}
+& \textbf{0.9587}
+& \textbf{0.8480}
+& \textbf{0.7480}
+& \textbf{0.8959} \\
 \bottomrule
 \end{tabular}
 }
@@ -104,12 +133,12 @@ We will report accuracy at a fixed operating threshold, AUROC, and where possibl
 Because watermark verification is often deployed at a single threshold, accuracy under a fixed policy is important even when AUROC is high.
 For image quality and semantic preservation, the benchmark should reuse the SpiderMark metrics: FID and CLIP image-text similarity.
 Because the watermark injection mechanism is unchanged, these quality metrics are supporting evidence rather than the main comparison axis.
-For meta-learning itself, we should additionally report training cost, checkpoint sensitivity, task sampling distribution, and performance variance across random seeds.
+For agentic scheduling itself, we should additionally report training cost, agent-call overhead, checkpoint sensitivity, task sampling distribution, and performance variance across random seeds.
 
 \subsection{Experiment Roadmap}
 
 The current table is promising but not yet sufficient for a CVPR submission.
-We organize the remaining experiments around a SOTA/canonical meta-learning comparison plus a scheduler ablation.
+We organize the remaining experiments around a scheduler benchmark plus a SOTA/canonical meta-learning context table.
 The repository-level execution plan is maintained in \texttt{BENCHMARK\_PLAN.md}; here we summarize the benchmark structure expected in the final paper.
 
 \paragraph{Stage 1: anchor baselines.}
@@ -117,13 +146,13 @@ This stage establishes the fixed reference points: the improved non-meta SpiderM
 It answers whether the direction is worth expanding and provides the non-meta anchor for all later scheduler deltas.
 
 \paragraph{Stage 2: scheduler benchmark.}
-This stage trains and evaluates the fixed comparison set in Table~\ref{tab:scheduler_benchmark_skeleton}.
+This stage trains and evaluates the fixed comparison set in Table~\ref{tab:scheduler_benchmark_skeleton}, with the agentic AI scheduler as the proposed method.
 The current execution plan is training-first: finish all selected scheduler checkpoints, then run the same downstream evaluation suite for every row.
 This avoids mixing preliminary eval settings with final matched-compute results.
 
 \paragraph{Stage 3: SOTA/canonical meta-learning comparison.}
 After the scheduler comparison is stable, this stage fixes the scheduler and compares FOMAML, MAML, ANIL, Reptile, Matching Networks-style attention, Prototypical Networks-style prototypes, and an R2D2-style differentiable ridge solver head under the same attack pool, number of meta-training steps, support/query sizes, and checkpoint-selection rule.
-This separates improvements from the meta-learning update itself from improvements caused by task scheduling.
+This separates improvements from the meta-learning update itself from improvements caused by agentic task scheduling.
 
 \paragraph{Stage 4: stability and ablations.}
 This stage checks that the scheduler ranking is stable rather than a single-run artifact.
@@ -133,10 +162,10 @@ External watermarking baselines can be included as contextual comparisons, but t
 The concrete missing items are:
 \begin{itemize}
     \item repeat the meta versus no-meta comparison across multiple seeds;
-    \item finish the seed-0 scheduler benchmark for UCB, ATS-style, BASS-style, and ASR-style task sampling;
+    \item finish the seed-0 scheduler benchmark for UCB, ATS-style, BASS-style, Adaptive Sampler-style, and agentic task sampling;
     \item optionally evaluate the GCP-style proxy as an appendix scheduler row;
     \item evaluate FOMAML, MAML, ANIL, Reptile, Matching Networks-style, Prototypical Networks-style, and R2D2-style ridge baselines under the selected fixed scheduler and compute budget;
     \item compare checkpoint-selection strategies across the full downstream sweep;
     \item test transfer to an unseen prompt or dataset split, ideally COCO as in the SpiderMark paper;
-    \item measure scheduler overhead, image quality, and semantic preservation for the final selected method.
+    \item measure agent-call overhead, scheduler overhead, image quality, and semantic preservation for the final selected method.
 \end{itemize}

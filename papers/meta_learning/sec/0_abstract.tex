@@ -1,10 +1,12 @@
 \begin{abstract}
 Reliable watermark verification for diffusion-generated images must remain stable after the image has passed through unknown downstream transformations, including compression, cropping, resampling, geometric warping, and compound platform-style processing.
 SpiderMark addresses this problem with structured frequency-domain watermark injection and a learned verifier, but the verifier is still trained from a fixed distribution of perturbations and checkpoints.
-This paper extends SpiderMark by formulating verifier training as a meta-learning problem.
-Rather than optimizing the verifier only for the current mini-batch, the proposed framework constructs watermark verification episodes from attack-conditioned support and query sets, performs an inner verifier adaptation step, and updates the verifier using query loss so that it learns parameters that transfer across downstream attacks.
-We further evaluate checkpoint variation and define a task-scheduler benchmark that compares uniform sampling, bandit scheduling, ATS-style scheduling, BASS-style scheduling, and ASR-style adaptive sampling under matched verifier episodes.
+This paper introduces \emph{Agentic MetaSpiderMark}, an agentic AI task scheduler for meta-learning-based watermark verification.
+The proposed scheduler monitors online verifier-training signals, including attack-specific query loss, loss change, uncertainty, failure rate, and sampling history, and converts them into task-weight updates for the next attack-conditioned episodes.
+Rather than using a fixed augmentation mixture or a hand-designed curriculum, Agentic MetaSpiderMark closes the loop between verifier feedback and downstream attack exposure while keeping the SpiderMark watermark pattern and diffusion generator unchanged.
+The framework constructs watermark verification episodes from attack-conditioned support and query sets, performs inner verifier adaptation, and lets the agentic scheduler decide which attack tasks should receive more training attention.
+We define a scheduler benchmark that compares the agentic scheduler against uniform sampling, bandit scheduling, ATS-style scheduling, BASS-style scheduling, and Adaptive Sampler-style task sampling under matched verifier episodes.
 Preliminary experiments on nine image transformations show that the meta-learned verifier improves mean accuracy from 0.8499 to 0.9182 and mean AUROC from 0.9293 to 0.9686 over a non-meta SpiderMark verifier, with gains on every evaluated attack.
 The largest observed improvement occurs under compound messaging-app processing, where accuracy rises from 0.6813 to 0.9173.
-These results suggest that robust watermark verification is not only a matter of watermark geometry or verifier architecture, but also of how verification episodes are constructed and scheduled during meta-training.
+These results suggest that robust watermark verification is not only a matter of watermark geometry or verifier architecture, but also of how an adaptive agent schedules downstream verification tasks during meta-training.
 \end{abstract}

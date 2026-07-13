@@ -6,7 +6,7 @@
 Let $\mathcal{G}$ denote a pretrained diffusion generator and let $W$ be the fixed SpiderMark frequency-domain watermark pattern.
 For a prompt $p$ and initial latent noise $x_T$, SpiderMark generates a clean image from $x_T$ and a watermarked image from a modified latent whose Fourier representation is blended with $W$.
 We keep this injection procedure unchanged.
-Our contribution is the verifier-training procedure: the verifier receives a recovered frequency-domain representation of a query image, optionally together with auxiliary similarity cues, and predicts whether the image is watermarked.
+Our contribution is the agentic verifier-training procedure: the verifier receives a recovered frequency-domain representation of a query image, optionally together with auxiliary similarity cues, while an agentic scheduler controls which downstream attack tasks are sampled during meta-training.
 
 We assume a set of downstream attack tasks
 \begin{equation}
@@ -15,15 +15,15 @@ We assume a set of downstream attack tasks
 where each $\tau_k$ is an image transformation such as JPEG compression, blur, random crop, occlusion, geometric warp, or a compound augmentation.
 Each task preserves the binary verification label but changes the evidence available to the verifier.
 An episode for task $\tau_k$ consists of a support set $\mathcal{S}_k$ and a query set $\mathcal{Q}_k$ sampled after applying the same attack transformation.
-The goal is to learn verifier parameters $\theta$ that adapt from $\mathcal{S}_k$ and generalize to $\mathcal{Q}_k$, rather than parameters that only minimize the supervised loss of the current mini-batch.
+The goal is to learn verifier parameters $\theta$ that adapt from $\mathcal{S}_k$ and generalize to $\mathcal{Q}_k$, while also learning a task-exposure policy that emphasizes attacks where the verifier currently needs more robust adaptation.
 
 \begin{figure*}[t]
     \centering
     \includegraphics[width=0.95\textwidth]{figures/metaspidermark_overview_imagegen.png}
-    \caption{\textbf{MetaSpiderMark overview.}
-    The SpiderMark watermark injection pipeline remains unchanged, while verifier training is reorganized into downstream attack episodes.
-    Each episode samples an attack-conditioned support/query split, adapts a meta-compatible verifier on the support set, and updates the base verifier using query performance.
-    This trains an initialization that is more robust to downstream transformations than static supervised verifier training.}
+    \caption{\textbf{Agentic MetaSpiderMark overview.}
+    SpiderMark generates watermarked images using its frequency-domain pattern, and verifier training is organized into attack-conditioned support/query episodes.
+    The meta-learned verifier reports online training signals to an agentic scheduler, which converts those signals into task weights for subsequent episodes.
+    The resulting closed loop adaptively controls downstream attack exposure during verifier meta-training.}
     \label{fig:method_overview}
 \end{figure*}
 
@@ -39,7 +39,7 @@ Given input spectrum $x$, PSNR cue $s$, and $\ell_1$ cue $d$, the verifier produ
 When auxiliary cues are disabled, the head receives only the learned feature embedding; otherwise it concatenates the backbone feature with $(s,d)$ before classification.
 This design preserves the original SpiderMark verifier interface while making its parameters compatible with differentiable inner-loop adaptation.
 
-\subsection{Episodic Downstream Meta-Training}
+\subsection{Attack-Conditioned Meta-Training}
 
 For each meta-training iteration $t$, a scheduler samples an attack task $\tau_k$ from a distribution $\pi_t(\tau)$ over $\mathcal{T}$.
 We then construct a support set $\mathcal{S}_k$ and query set $\mathcal{Q}_k$ from the SpiderMark verifier dataset.
@@ -76,47 +76,87 @@ The outer update optimizes the original parameters using query loss after adapta
     \mathcal{L}_{\mathcal{Q}_k}(\theta'_k)
     \right].
 \end{equation}
-In the current implementation, the main MetaSpiderMark row uses the first-order approximation for efficiency: the query gradient updates the base parameters through the adapted weights while omitting second-order Hessian terms.
+In the current implementation, the verifier update uses a first-order approximation for efficiency: the query gradient updates the base parameters through the adapted weights while omitting second-order Hessian terms.
+
+\subsection{Agentic Task Scheduler}
+
+The central component of Agentic MetaSpiderMark is the scheduler that controls $\pi_t$.
+At iteration $t$, the training loop maintains a compact state summary $h_t$ for each attack task, including usage count, recent query loss, loss change, uncertainty, reward, failure rate, and recency.
+This summary is serialized as a structured prompt to an agentic AI controller.
+The controller returns a residual scheduling action
+\begin{equation}
+    a_t = \Delta_t \in \mathbb{R}^{K},
+\end{equation}
+where each element proposes how much to increase or decrease the sampling weight of one attack task.
+To keep the scheduler stable and auditable, the action is not applied directly.
+We clip the residual to a bounded range and combine it with a base distribution:
+\begin{equation}
+    \pi_{t+1}
+    =
+    \mathrm{normalize}
+    \left(
+    \pi_{\mathrm{base}} + \lambda \, \mathrm{clip}(\Delta_t)
+    \right),
+\end{equation}
+where $\lambda$ controls the maximum scheduler influence.
+The local training code therefore retains final authority over valid task probabilities, while the agent supplies adaptive corrections based on online training behavior.
+
+The agentic scheduler differs from non-contextual bandits and hand-designed curricula in two ways.
+First, it reasons over a structured multi-signal task state rather than a single scalar reward.
+Second, its output is a residual correction, so it can emphasize difficult or under-explored attacks without collapsing coverage of the remaining task pool.
+This makes the method model-agnostic: it does not require changing the diffusion generator, watermark pattern, or verifier architecture, and only controls the sequence of attack-conditioned verifier episodes.
+
+\paragraph{Agent protocol and safeguards.}
+The scheduler-agent interface is deliberately narrow.
+At an agent update step, the training loop sends a JSON state containing the global meta-training context and one row per attack task.
+Each task row includes the task name, current base weight, usage count, last sampled step, exponential moving averages of query loss, failure rate, reward, and uncertainty, plus recent-window summaries such as recent loss mean, loss standard deviation, and reward mean.
+The global context records training-level signals such as recent meta-loss trend, gradient norm, learning rate, and recent task counts.
+The agent is instructed to return only a JSON object with two fields:
+\begin{equation}
+    \{\texttt{delta\_weights}: [\Delta_1,\ldots,\Delta_K],
+    \texttt{rationale}: r\}.
+\end{equation}
+The response is validated against a fixed JSON schema, and the length of \texttt{delta\_weights} must match the number of attack tasks.
+If parsing fails, the API times out, the schema is invalid, or the vector has the wrong shape, the controller falls back to the cached previous residual or the local base scheduler, depending on the run configuration.
+
+The agent never directly sets the sampling distribution.
+Every returned residual is clipped to the configured range $[-\rho,\rho]$ with $\rho=0.15$ in the current implementation, combined with the base policy, lower-bounded by a minimum task weight, and normalized locally.
+The default agent call interval is 100 meta-training steps and the recent statistics window is 20 observations.
+All agent responses, rationales, cached residuals, API errors, call counts, and latency statistics are logged to the scheduler trace.
+This design makes the agentic component reproducible and auditable: the language model proposes bounded residual corrections, while deterministic local code enforces validity, coverage, and probability normalization.
 
 \begin{algorithm}[t]
-\caption{MetaSpiderMark Verifier Training}
+\caption{Agentic MetaSpiderMark Training}
 \label{alg:metaspidermark}
 \begin{algorithmic}[1]
-\Require SpiderMark verifier dataset $\mathcal{D}$; attack tasks $\mathcal{T}$; verifier $f_\theta$; scheduler state $h$; support size $n_s$; query size $n_q$
+\Require SpiderMark verifier dataset $\mathcal{D}$; attack tasks $\mathcal{T}$; verifier $f_\theta$; agentic scheduler $A$; support size $n_s$; query size $n_q$
+\State Initialize base task distribution $\pi_0$ and task statistics $h_0$
 \For{each meta-training iteration}
-    \State Build task distribution $\pi_t(\tau \mid h)$
+    \State Build task distribution $\pi_t(\tau \mid h_t)$
     \State Sample attack task $\tau_k \sim \pi_t$
     \State Sample support set $\mathcal{S}_k$ and query set $\mathcal{Q}_k$ under $\tau_k$
     \State Copy verifier parameters $\theta$ to task parameters $\theta'_k$
     \State Adapt $\theta'_k \leftarrow \theta'_k - \alpha\nabla_{\theta'_k}\mathcal{L}_{\mathcal{S}_k}(\theta'_k)$
     \State Compute query loss $q_k = \mathcal{L}_{\mathcal{Q}_k}(\theta'_k)$
     \State Update base parameters $\theta \leftarrow \theta - \beta\nabla_{\theta}q_k$
-    \State Update scheduler state $h$ with $(\tau_k, q_k)$ when feedback is supported
+    \State Update task statistics $h_{t+1}$ with $(\tau_k, q_k)$
+    \If{agent update interval is reached}
+        \State Ask agent $A$ for residual task correction $\Delta_t$ from $h_{t+1}$
+        \State Update $\pi_{t+1} \leftarrow \mathrm{normalize}(\pi_{\mathrm{base}} + \lambda\,\mathrm{clip}(\Delta_t))$
+    \EndIf
 \EndFor
 \end{algorithmic}
 \end{algorithm}
 
-\subsection{Task Scheduling}
+\subsection{Scheduler Baselines}
 
-Task scheduling controls $\pi_t$, the distribution over attack tasks used to construct each episode.
-The simplest distribution is uniform over attack tasks; in our benchmark it serves as a minimal sanity anchor rather than the main compute target.
-We also support cyclic scheduling for deterministic coverage, but reserve it for optional diagnostics.
-The main scheduler comparison includes non-contextual bandit scheduling, ATS-style adaptive scheduling based on meta-model state, BASS-style contextual bandit scheduling, and ASR-style adaptive sampling based on online diversity, entropy, and difficulty statistics.
+The benchmark compares the agentic scheduler against non-agentic task-selection strategies under the same verifier, attack pool, support/query sizes, and training budget.
+Uniform sampling serves as a minimal anchor, while cyclic scheduling is reserved for diagnostics.
+The main comparison includes non-contextual UCB bandit scheduling~\cite{auer2002finite}, ATS-style adaptive scheduling based on meta-model state~\cite{yao2021ats}, BASS-style contextual bandit scheduling~\cite{ban2023bass}, and Adaptive Sampler-style task sampling based on online diversity, entropy, and difficulty statistics~\cite{wang2024tasksampler}.
 Our ATS-style and BASS-style controllers are repository-native approximations that preserve the relevant scheduling principle under the SpiderMark attack-task interface; they should be interpreted as SOTA-inspired task-scheduler baselines rather than official reproductions of the original implementations.
-The ASR-style row similarly adapts the recent adaptive sampler idea to attack tasks by combining under-sampling and recency as a diversity signal, loss volatility as an entropy-like signal, and normalized recent query loss as a difficulty signal.
-We also provide a GCP-style appendix row that adapts exponential class-weight updates to attack-task weights; because the original GCP setting is class-combination sampling, we treat this row as a proxy rather than a direct reproduction.
-We also include an exploratory \texttt{derts\_proxy} mode for appendix experiments: it approximates DERTS-style representative and robust task selection using online scalar feedback, but it is not an official DERTS implementation because the current training loop does not optimize full task-pool gradient subset objectives.
-The repository further contains a residual scheduler that maintains a stable base distribution and learns a bounded correction from online feedback:
-\begin{equation}
-    p_{\mathrm{final}} =
-    \mathrm{normalize}(p_{\mathrm{base}} + \Delta),
-\end{equation}
-where $\Delta$ is constrained by a residual scale.
-Feedback-driven controllers track per-task statistics such as usage count, recent loss, loss change, uncertainty, reward, and failure rate.
-An optional LLM-assisted variant receives a compact JSON summary of these statistics and proposes residual corrections, which are clipped and normalized locally.
-
-These schedulers are part of the benchmark design rather than the only claimed contribution.
-They allow the final evaluation to answer whether gains come from meta-learning itself, from better attack exposure, or from their combination.
+The Adaptive Sampler-style row adapts the recent ASr idea to attack tasks by combining under-sampling and recency as a diversity signal, loss volatility as an entropy-like signal, and normalized recent query loss as a difficulty signal.
+We also provide optional appendix proxies for GCP-style exponential task weighting~\cite{liu2020adaptive} and DERTS-style representative task selection~\cite{zhan2024derts}.
+These baselines let the final evaluation isolate the benefit of agentic scheduling from the benefit of meta-learning itself.
 
 \paragraph{Meta-learning algorithm context.}
 The main benchmark fixes the meta-learning update so that scheduler effects are isolated.

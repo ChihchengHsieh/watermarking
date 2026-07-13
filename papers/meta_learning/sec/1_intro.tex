@@ -16,16 +16,17 @@ Yet the verifier is still trained under a conventional supervised recipe: the tr
 When downstream conditions shift, the verifier must generalize from this fixed mixture.
 
 This work studies a complementary question:
-\emph{can the verifier itself be trained to adapt across downstream watermark verification tasks?}
+\emph{can an agentic scheduler improve how the verifier is exposed to downstream watermark verification tasks during meta-training?}
 We treat each attack condition as a task and construct episodic verifier updates from support and query examples.
 During meta-training, the verifier first adapts on a support set sampled under one downstream transformation and is then optimized using the corresponding query set.
-This objective encourages model parameters that remain useful after task-specific adaptation, instead of parameters that only minimize the immediate supervised loss.
-In addition, we evaluate checkpoints across downstream attack sweeps and compare task-scheduling policies, using uniform sampling only as a minimal anchor and focusing the main benchmark on bandit scheduling, ATS-style adaptive task scheduling, BASS-style contextual bandits, and ASR-style adaptive sampling.
+The key difference is that task exposure is not fixed.
+An agentic AI scheduler observes online meta-training signals, summarizes the recent behavior of each attack task, and proposes residual task-weight corrections that determine the next episode distribution.
+This turns verifier training into a closed-loop process: attack episodes produce support/query losses, the agent interprets those signals, and the resulting task distribution changes the verifier's future training curriculum.
 
-The resulting framework, \emph{MetaSpiderMark}, preserves the original SpiderMark injection mechanism while replacing static verifier training with meta-learned verifier optimization.
-The central claim is therefore deliberately narrow and testable: meta-learning improves the robustness of the SpiderMark verifier under downstream transformations.
+The resulting framework, \emph{Agentic MetaSpiderMark}, preserves the original SpiderMark injection mechanism while replacing static or manually scheduled verifier training with agent-guided attack-task scheduling.
+The central claim is deliberately narrow and testable: an agentic scheduler can improve meta-learning-based verifier robustness by deciding which downstream attacks should receive training attention.
 This is different from claiming a new watermark pattern, a new diffusion generator, or a general-purpose meta-learning algorithm.
-It is an extension of SpiderMark focused on verifier generalization.
+It is an extension of SpiderMark focused on agentic control of verifier training.
 
 Our preliminary evaluation already indicates that this framing is promising.
 Using the current downstream checkpoint sweep, the meta-learned verifier selected at epoch 116 improves mean accuracy over nine attacks from 0.8499 to 0.9182 and mean AUROC from 0.9293 to 0.9686 compared with the non-meta SpiderMark verifier.
@@ -34,8 +35,9 @@ These results motivate a broader benchmark that compares not only against the or
 
 The contributions of this paper draft are:
 \begin{itemize}
-    \item We formulate robust SpiderMark verifier training as an episodic meta-learning problem over downstream image transformations.
-    \item We introduce a meta-compatible SpiderMark verifier that retains frequency-domain inputs and PSNR/$\ell_1$ auxiliary cues while supporting inner-loop adaptation.
-    \item We define a benchmark that separates three sources of improvement: the SpiderMark watermark itself, meta-learned verifier initialization, and task scheduling during meta-training.
+    \item We introduce an agentic AI task scheduler for robust diffusion watermark verification, where an AI controller monitors online training signals and adaptively reweights downstream attack tasks.
+    \item We formulate SpiderMark verifier training as closed-loop episodic meta-learning: support/query attack episodes update the verifier, while query feedback updates the scheduler's task distribution.
+    \item We preserve the original SpiderMark watermark pattern and diffusion generator, making the proposed scheduler a model-agnostic verifier-side training mechanism.
+    \item We define a scheduler benchmark that compares the agentic controller against uniform, UCB bandit, ATS-style, BASS-style, and Adaptive Sampler-style task scheduling under matched attack episodes and compute budgets.
     \item We report preliminary downstream attack results showing consistent gains over a non-meta verifier across nine transformations.
 \end{itemize}

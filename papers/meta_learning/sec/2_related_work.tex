@@ -21,15 +21,17 @@ ANIL studies whether MAML's gains come from rapid full-network adaptation or fro
 Metric-based meta-learners such as Matching Networks~\cite{vinyals2016matching} and Prototypical Networks~\cite{snell2017prototypical} classify queries by comparing support and query embeddings, while solver-based meta-learners such as R2D2~\cite{bertinetto2019meta} and MetaOptNet~\cite{lee2019metaoptnet} adapt closed-form or convex classifiers on top of learned embeddings.
 This idea is especially relevant when training and testing conditions are organized as related tasks rather than i.i.d. samples.
 For watermark verification, each downstream transformation induces a related but distinct classification task: the semantic labels remain clean versus watermarked, but the visible and spectral evidence changes.
-MetaSpiderMark uses this structure directly by sampling attack-conditioned support and query sets.
+Agentic MetaSpiderMark uses this structure directly by sampling attack-conditioned support and query sets, then using their query feedback to guide future task exposure.
 
-\paragraph{Task scheduling and curricula.}
+\paragraph{Task scheduling, curricula, and agentic control.}
 The meta-learning objective determines how the verifier updates within a task, but the sequence of tasks also matters.
 Uniform sampling is simple and stable, while cyclic schedules ensure exposure to every attack.
 Hard-example mining and curriculum strategies can emphasize tasks that produce high loss or recent failure.
 This connects to curriculum learning, where the order and difficulty of training examples can shape generalization~\cite{bengio2009curriculum}.
 Recent adaptive task schedulers learn to select meta-training tasks from model-state signals, either through neural scheduling policies such as ATS~\cite{yao2021ats} or contextual-bandit formulations such as BASS~\cite{ban2023bass}.
-Other task-sampling methods emphasize diversity, difficulty, uncertainty, or class-combination utilities, as in adaptive sampler and GCP-style curricula.
+Other task-sampling methods emphasize diversity, difficulty, uncertainty, or class-combination utilities, as in Adaptive Sampler~\cite{wang2024tasksampler} and GCP-style curricula~\cite{liu2020adaptive}.
 Recent task-selection work such as DERTS~\cite{zhan2024derts} instead selects weighted task subsets to approximate full task-pool gradients, targeting data-efficient and noisy-task meta-learning without modifying the meta-learner architecture.
-Our current codebase also includes residual task controllers that add bounded corrections on top of a base scheduler, including an optional LLM-assisted controller that receives compact training statistics and proposes residual task-weight updates.
-For the final benchmark, these schedulers should be compared directly so that improvements from meta-learning are not confused with improvements from task selection alone.
+Agentic AI offers a complementary design point: rather than learning a fixed scheduler model offline or relying on a scalar bandit reward, an agent can inspect structured online training summaries, reason over task difficulty and coverage, and issue bounded scheduling actions.
+Agentic MetaSpiderMark uses this idea as a verifier-side controller.
+The scheduler receives compact task statistics and proposes residual task-weight updates, while local constraints clip and normalize the action before it changes the next episode distribution.
+For the final benchmark, agentic scheduling should be compared directly against non-agentic schedulers so that improvements from verifier meta-learning are not confused with improvements from closed-loop task selection.
