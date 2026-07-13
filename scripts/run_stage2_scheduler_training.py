@@ -108,6 +108,26 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--w-strength", type=float, default=0.99)
     parser.add_argument("--w-pattern", default="octoweb")
     parser.add_argument("--residual-scale", type=float, default=0.15)
+    parser.add_argument(
+        "--residual-scale-final",
+        type=float,
+        default=None,
+        help=(
+            "Optional final residual budget for llm_residual. If omitted for "
+            "llm_residual, defaults to 0.5 so the agent starts conservatively "
+            "and can later make stronger task-suppression decisions."
+        ),
+    )
+    parser.add_argument(
+        "--residual-scale-switch-step",
+        type=int,
+        default=None,
+        help=(
+            "Global step where llm_residual switches from --residual-scale to "
+            "--residual-scale-final. If omitted for llm_residual with a final "
+            "scale, defaults to 400."
+        ),
+    )
     parser.add_argument("--residual-lr", type=float, default=0.05)
     parser.add_argument("--residual-base-sampling", default="uniform")
     parser.add_argument("--dry-run", action="store_true")
@@ -695,10 +715,24 @@ def main() -> None:
 
     tasks = build_meta_attack_tasks(args.image_size, task_names=task_names)
     if args.scheduler in {"residual", "llm_residual"}:
+        residual_scale_final = args.residual_scale_final
+        residual_scale_switch_step = args.residual_scale_switch_step
+        if args.scheduler == "llm_residual":
+            if residual_scale_final is None:
+                residual_scale_final = 0.5
+            if residual_scale_switch_step is None and residual_scale_final is not None:
+                residual_scale_switch_step = 400
         scheduler_config = {
             "residual_scale": args.residual_scale,
             "lr": args.residual_lr,
         }
+        if args.scheduler == "llm_residual":
+            scheduler_config.update(
+                {
+                    "residual_scale_final": residual_scale_final,
+                    "residual_scale_switch_step": residual_scale_switch_step,
+                }
+            )
     else:
         scheduler_config = {}
 

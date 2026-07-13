@@ -38,13 +38,52 @@ Figure~\ref{fig:training_diagnostics} summarizes the meta-loss trajectory, sampl
     \begin{subfigure}[t]{0.68\textwidth}
         \centering
         \includegraphics[width=\linewidth]{figures/llm_delta_heatmap.png}
-        \caption{LLM residual deltas}
+        \caption{Agent residual deltas}
     \end{subfigure}
     \caption{\textbf{Available meta-training diagnostics.}
     These plots show that the current implementation logs optimization behavior, task exposure, and agentic scheduler corrections during meta-training.
+    The heatmap shows the signed residuals proposed by the agent after the active residual-budget clip and before local probability normalization: warm cells increase an attack task's sampling weight, while cool cells reduce it.
     They should be used as diagnostic evidence and sanity checks; the final paper still requires controlled scheduler baselines under matched compute budgets.}
     \label{fig:training_diagnostics}
 \end{figure*}
+
+\paragraph{Decision-trace analysis.}
+The scheduler trace contains 31 agent updates between global steps 1 and 1902.
+Each update stores the signed residual vector, the compact task statistics, and a natural-language rationale.
+The run starts with a conservative residual budget of $\pm 0.15$ and switches at meta-training step 400 to a wider budget of $\pm 0.5$.
+This makes the early scheduler behavior cautious, while giving the agent enough authority later to suppress attacks that appear saturated or unproductive.
+The rationales show that the agent does not behave as a simple hard-task miner.
+Instead, it repeatedly weighs four kinds of evidence: attack difficulty from recent query loss, uncertainty from loss volatility, coverage from usage and recency, and usefulness from recent reward or loss improvement.
+Across the trace, the rationales frequently cite over-sampling and under-sampling, high or low loss, uncertainty, reward, recency, and balance.
+This makes the scheduler auditable: the heatmap gives the action, while the rationale explains why the action was chosen.
+
+The most visible pattern is the \texttt{crop} row.
+During the middle of training, the agent often increases \texttt{crop} because its recent loss and uncertainty remain high.
+Later, when \texttt{crop} has saturated usage but poor progress, the rationale switches from ``hard and informative'' to ``over-sampled'' and the residual becomes strongly negative.
+This sign reversal is important: the agent is not merely increasing all high-loss tasks; after the residual budget is widened, it can also decide that a hard task should receive less sampling when the trace suggests diminishing returns.
+The \texttt{msg\_app} task is typically increased in the early and middle phases because the rationales identify persistent loss and uncertainty under compound platform-style processing.
+By contrast, \texttt{occlusion} is often reduced early when it has low loss and low uncertainty, but receives positive residuals later to maintain coverage and stabilize under-sampled regions of the task pool.
+Tasks such as \texttt{downup50}, \texttt{jpeg}, and \texttt{clean} usually receive smaller corrections because the agent treats them as stable, improving, or useful mainly for coverage.
+
+\begin{table*}[t]
+\centering
+\small
+\textbf{Representative agentic scheduler decisions.}
+Residual signs indicate whether the agent proposed to increase or decrease sampling weight after the active residual-budget clip and before probability normalization.
+\vspace{0.4em}
+
+\begin{tabular}{r p{0.26\textwidth} p{0.38\textwidth} p{0.22\textwidth}}
+\toprule
+\textbf{Step} & \textbf{Main residuals} & \textbf{Rationale summary} & \textbf{Interpretation} \\
+\midrule
+1 & all zero & no task evidence yet & preserve uniform sampling \\
+201 & \texttt{msg\_app} $+$, \texttt{crop} $+$, \texttt{occlusion} $-$ & high loss/uncertainty on compound and crop tasks; low signal on occlusion & focus on informative attacks \\
+702 & \texttt{crop} $+$, \texttt{clean} $-$, \texttt{downup50} $-$ & crop remains high-loss and uncertain; clean/down-up appear stable & emphasize difficult task \\
+1402 & \texttt{crop} $-$, \texttt{occlusion} $+$, \texttt{downup50} $-$ & crop is saturated and no longer improving; occlusion needs coverage & prevent task dominance \\
+1902 & \texttt{crop} $-$, \texttt{occlusion} $+$ & severe crop over-sampling despite poor progress; occlusion is stable but under-exposed & rebalance late training \\
+\bottomrule
+\end{tabular}
+\end{table*}
 
 \subsection{Available Proposed-Method Checkpoint}
 

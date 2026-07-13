@@ -48,6 +48,8 @@ class LLMTaskControllerConfig(ResidualTaskControllerConfig):
     max_context_tasks: int = 12
     fallback_on_error: bool = True
     log_errors: bool = False
+    residual_scale_final: Optional[float] = None
+    residual_scale_switch_step: Optional[int] = None
 
 
 class ResidualTaskController:
@@ -334,7 +336,8 @@ class LLMResidualTaskController(ResidualTaskController):
         current_step = self.step if step is None else int(step)
         features = self._build_features(base, current_step)
 
-        local_delta = self.config.residual_scale * np.tanh(features @ self.theta)
+        active_scale = self._active_residual_scale(current_step)
+        local_delta = active_scale * np.tanh(features @ self.theta)
         llm_delta = self._cached_delta
         should_call = (current_step - self._last_llm_step) >= self.config.call_interval
 
@@ -365,6 +368,7 @@ class LLMResidualTaskController(ResidualTaskController):
             "delta": delta,
             "local_delta": local_delta,
             "llm_delta": llm_delta,
+            "active_residual_scale": float(active_scale),
             "features": features,
         }
 
@@ -374,6 +378,10 @@ class LLMResidualTaskController(ResidualTaskController):
             {
                 "llm_model": self.config.model,
                 "llm_call_interval": self.config.call_interval,
+                "residual_scale_initial": self.config.residual_scale,
+                "residual_scale_final": self.config.residual_scale_final,
+                "residual_scale_switch_step": self.config.residual_scale_switch_step,
+                "active_residual_scale": self._active_residual_scale(self.step),
                 "last_llm_response": self.last_llm_response,
                 "last_llm_error": self.last_llm_error,
                 "cached_llm_delta": self._cached_delta.copy(),
@@ -434,8 +442,18 @@ class LLMResidualTaskController(ResidualTaskController):
             raise ValueError(
                 f"LLM returned {delta.shape} delta weights, expected {(self.num_tasks,)}."
             )
-        delta = np.clip(delta, -self.config.residual_scale, self.config.residual_scale)
+        active_scale = self._active_residual_scale(step)
+        delta = np.clip(delta, -active_scale, active_scale)
         return delta
+
+    def _active_residual_scale(self, step: int) -> float:
+        final_scale = self.config.residual_scale_final
+        switch_step = self.config.residual_scale_switch_step
+        if final_scale is None or switch_step is None:
+            return float(self.config.residual_scale)
+        if int(step) >= int(switch_step):
+            return float(final_scale)
+        return float(self.config.residual_scale)
 
     def _build_llm_payload(
         self,
@@ -474,13 +492,14 @@ class LLMResidualTaskController(ResidualTaskController):
                 }
             )
 
+        active_scale = self._active_residual_scale(step)
         system_prompt = (
             # TODO: Explain SpiderMark
             "You are an LLM-based residual controller for the SpiderMark "
             "meta-training task scheduler. You must not replace the base "
             "scheduler. Your job is to propose residual corrections "
             "delta_weights on top of base_weights. The training code will clip "
-            "and normalize your output. With a large residual_scale, your deltas "
+            "and normalize your output. With a large active_residual_scale, your deltas "
             "can strongly reshape the final task weights, but they must still be "
             "justified by the compact training signals. Prefer stable corrections. "
             "Increase a task only when the state suggests useful training signal: "
@@ -493,15 +512,19 @@ class LLMResidualTaskController(ResidualTaskController):
         )
         user_prompt = {
             "step": step,
-            "residual_scale": self.config.residual_scale,
+            "residual_scale": active_scale,
+            "active_residual_scale": active_scale,
+            "residual_scale_initial": self.config.residual_scale,
+            "residual_scale_final": self.config.residual_scale_final,
+            "residual_scale_switch_step": self.config.residual_scale_switch_step,
             "task_count": self.num_tasks,
             "global_training_state": self._json_ready(self.global_context),
             "tasks": task_rows,
             "instruction": (
                 "Return one delta weight per task, in task_id order. Positive "
                 "delta means sample this task more often; negative delta means "
-                "sample it less often. Keep each value small, within "
-                "[-residual_scale, residual_scale], and keep the average delta "
+                "sample it less often. Keep each value within "
+                "[-active_residual_scale, active_residual_scale], and keep the average delta "
                 "near zero. Do not output a new scheduler policy; output only "
                 "residual corrections. Use base_weight as the stable prior. "
                 "Feature meanings: base_weight is the base scheduler prior; "
@@ -528,8 +551,8 @@ class LLMResidualTaskController(ResidualTaskController):
                     "type": "array",
                     "items": {
                         "type": "number",
-                        "minimum": -self.config.residual_scale,
-                        "maximum": self.config.residual_scale,
+                        "minimum": -active_scale,
+                        "maximum": active_scale,
                     },
                     "minItems": self.num_tasks,
                     "maxItems": self.num_tasks,

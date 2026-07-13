@@ -95,10 +95,10 @@ We clip the residual to a bounded range and combine it with a base distribution:
     =
     \mathrm{normalize}
     \left(
-    \pi_{\mathrm{base}} + \lambda \, \mathrm{clip}(\Delta_t)
+    \pi_{\mathrm{base}} + \lambda \, \mathrm{clip}_{\rho_t}(\Delta_t)
     \right),
 \end{equation}
-where $\lambda$ controls the maximum scheduler influence.
+where $\lambda$ controls the maximum scheduler influence and $\rho_t$ is the residual budget at training step $t$.
 The local training code therefore retains final authority over valid task probabilities, while the agent supplies adaptive corrections based on online training behavior.
 
 The agentic scheduler differs from non-contextual bandits and hand-designed curricula in two ways.
@@ -120,7 +120,9 @@ The response is validated against a fixed JSON schema, and the length of \texttt
 If parsing fails, the API times out, the schema is invalid, or the vector has the wrong shape, the controller falls back to the cached previous residual or the local base scheduler, depending on the run configuration.
 
 The agent never directly sets the sampling distribution.
-Every returned residual is clipped to the configured range $[-\rho,\rho]$ with $\rho=0.15$ in the current implementation, combined with the base policy, lower-bounded by a minimum task weight, and normalized locally.
+Every returned residual is clipped to the configured range $[-\rho_t,\rho_t]$, combined with the base policy, lower-bounded by a minimum task weight, and normalized locally.
+In the logged 2000-step agentic run and in the released training code, we start with a conservative residual budget of $\rho_t=0.15$ and switch to $\rho_t=0.5$ at meta-training step 400.
+This progressive budget lets the agent first explore with small corrections and then, once task statistics become reliable, make stronger decisions about which attack types should be suppressed because they are saturated, over-sampled, or no longer yielding useful progress.
 The default agent call interval is 100 meta-training steps and the recent statistics window is 20 observations.
 All agent responses, rationales, cached residuals, API errors, call counts, and latency statistics are logged to the scheduler trace.
 This design makes the agentic component reproducible and auditable: the language model proposes bounded residual corrections, while deterministic local code enforces validity, coverage, and probability normalization.
@@ -129,7 +131,7 @@ This design makes the agentic component reproducible and auditable: the language
 \caption{Agentic MetaSpiderMark Training}
 \label{alg:metaspidermark}
 \begin{algorithmic}[1]
-\Require SpiderMark verifier dataset $\mathcal{D}$; attack tasks $\mathcal{T}$; verifier $f_\theta$; agentic scheduler $A$; support size $n_s$; query size $n_q$
+\Require SpiderMark verifier dataset $\mathcal{D}$; attack tasks $\mathcal{T}$; verifier $f_\theta$; agentic scheduler $A$; residual-budget schedule $\rho_t$; support size $n_s$; query size $n_q$
 \State Initialize base task distribution $\pi_0$ and task statistics $h_0$
 \For{each meta-training iteration}
     \State Build task distribution $\pi_t(\tau \mid h_t)$
@@ -142,7 +144,7 @@ This design makes the agentic component reproducible and auditable: the language
     \State Update task statistics $h_{t+1}$ with $(\tau_k, q_k)$
     \If{agent update interval is reached}
         \State Ask agent $A$ for residual task correction $\Delta_t$ from $h_{t+1}$
-        \State Update $\pi_{t+1} \leftarrow \mathrm{normalize}(\pi_{\mathrm{base}} + \lambda\,\mathrm{clip}(\Delta_t))$
+        \State Update $\pi_{t+1} \leftarrow \mathrm{normalize}(\pi_{\mathrm{base}} + \lambda\,\mathrm{clip}_{\rho_t}(\Delta_t))$
     \EndIf
 \EndFor
 \end{algorithmic}

@@ -13,8 +13,8 @@ In practice, this means first completing the fixed-budget scheduler rows for uni
 
 There are also practical limitations.
 Meta-training adds computational cost because each episode requires support and query passes, and checkpoint selection can materially affect downstream robustness.
-The agentic scheduler introduces additional degrees of freedom through the prompt, state summary, update interval, and residual clipping rule; these should be evaluated carefully so that the paper does not conflate verifier meta-learning with uncontrolled agent behavior.
+The agentic scheduler introduces additional degrees of freedom through the prompt, state summary, update interval, and residual-budget schedule; these should be evaluated carefully so that the paper does not conflate verifier meta-learning with uncontrolled agent behavior.
 For the main paper, ATS-style adaptive task scheduling, BASS-style contextual bandit scheduling, and Adaptive Sampler-style task sampling are the most important SOTA-inspired scheduler baselines because they directly target task selection during meta-learning.
 The paper should avoid overclaiming exact reproduction unless the original ATS or BASS code is ported into this benchmark.
-The agentic scheduler should be framed as a bounded closed-loop controller rather than an unconstrained language-model decision maker: all proposed task weights are clipped, normalized, and logged by local code.
+The agentic scheduler should be framed as a bounded closed-loop controller rather than an unconstrained language-model decision maker: all proposed task weights are clipped by the active residual budget, normalized, and logged by local code.
 Finally, all preliminary results in this draft should be considered provisional until repeated across seeds and evaluated on the full benchmark suite.

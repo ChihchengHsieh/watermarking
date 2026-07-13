@@ -1447,3 +1447,10 @@ global_step,step_time_sec,meta_loss,grad_norm,tasks
 1446,232.8855,0.000067,0.023490,downup50|clean|occlusion
 1447,240.5114,0.000153,0.017660,downup50|clean|occlusion
 1448,239.5377,0.000280,0.088119,downup50|clean|occlusion
+1449,233.4178,0.000231,0.078661,downup50|clean|occlusion
+1450,227.3917,0.001028,1.785423,jpeg|jpeg|jpeg
+1451,228.1354,0.004825,1.074744,jpeg|clean|downup50
+1452,232.6752,0.003715,0.858447,blur|blur|blur
+1453,227.4182,0.000604,0.157908,blur|blur|blur
+1454,226.8065,0.001034,0.525729,blur|blur|blur
+1455,231.1583,0.059868,7.914128,blur|blur|occlusion
