@@ -20,7 +20,7 @@ This work studies a complementary question:
 We treat each attack condition as a task and construct episodic verifier updates from support and query examples.
 During meta-training, the verifier first adapts on a support set sampled under one downstream transformation and is then optimized using the corresponding query set.
 This objective encourages model parameters that remain useful after task-specific adaptation, instead of parameters that only minimize the immediate supervised loss.
-In addition, we evaluate checkpoints across downstream attack sweeps and compare task-scheduling policies, using uniform sampling only as a minimal anchor and focusing the main benchmark on bandit scheduling, ATS-style adaptive task scheduling, BASS-style contextual bandits, and ASr-style adaptive sampling.
+In addition, we evaluate checkpoints across downstream attack sweeps and compare task-scheduling policies, using uniform sampling only as a minimal anchor and focusing the main benchmark on bandit scheduling, ATS-style adaptive task scheduling, BASS-style contextual bandits, and ASR-style adaptive sampling.
 
 The resulting framework, \emph{MetaSpiderMark}, preserves the original SpiderMark injection mechanism while replacing static verifier training with meta-learned verifier optimization.
 The central claim is therefore deliberately narrow and testable: meta-learning improves the robustness of the SpiderMark verifier under downstream transformations.

@@ -1420,3 +1420,5 @@ global_step,step_time_sec,meta_loss,grad_norm,tasks
 1419,229.7196,0.021149,4.541428,jpeg|jpeg|clean
 1420,231.9726,0.000093,0.062945,occlusion|downup50|clean
 1421,224.7219,0.000201,0.106413,downup50|occlusion|clean
+1422,224.1371,0.000148,0.328065,downup50|occlusion|clean
+1423,232.6575,0.000516,0.440446,downup50|occlusion|downup50

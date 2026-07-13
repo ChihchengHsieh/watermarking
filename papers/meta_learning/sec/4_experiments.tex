@@ -72,7 +72,7 @@ The final evaluation is organized around two complementary questions.
 First, does episodic verifier training improve SpiderMark robustness over a non-meta verifier?
 Second, under matched verifier architecture, attack pool, support/query sizes, and 2000-step training budget, which task scheduler provides the strongest downstream robustness?
 Uniform sampling serves as a minimal anchor, while cyclic scheduling is kept as an optional diagnostic rather than a main compute target.
-The scheduler benchmark compares non-contextual UCB bandits, ATS-style adaptive task scheduling, BASS-style contextual bandits, and ASr-style adaptive sampling.
+The scheduler benchmark compares non-contextual UCB bandits, ATS-style adaptive task scheduling, BASS-style contextual bandits, and ASR-style adaptive sampling.
 A GCP-style task-weighting proxy is included as an appendix candidate because its original class-combination setting does not map exactly to our attack-task pool.
 DERTS remains an important future baseline, but a faithful implementation requires full task-pool gradient subset optimization rather than the scalar online feedback currently available in the training loop.
 
@@ -90,7 +90,7 @@ Uniform & random anchor &  &  &  &  & 2000 & checkpoint ready, eval pending \\
 Bandit-UCB & non-contextual bandit &  &  &  &  & 2000 & training \\
 ATS-style~\cite{yao2021ats} & adaptive task scheduler &  &  &  &  & 2000 & queued \\
 BASS-style~\cite{ban2023bass} & contextual neural bandit principle &  &  &  &  & 2000 & queued \\
-ASr-style & diversity/entropy/difficulty sampler &  &  &  &  & 2000 & queued \\
+ASR-style & diversity/entropy/difficulty sampler &  &  &  &  & 2000 & queued \\
 GCP-style proxy & exponential task weighting &  &  &  &  & 2000 & optional appendix \\
 \textbf{MetaSpiderMark} & proposed verifier training & \textbf{0.8959} & \textbf{0.7480} & \textbf{0.9545} & \textbf{0.8389} & 2000 & evaluated \\
 \bottomrule
@@ -133,7 +133,7 @@ External watermarking baselines can be included as contextual comparisons, but t
 The concrete missing items are:
 \begin{itemize}
     \item repeat the meta versus no-meta comparison across multiple seeds;
-    \item finish the seed-0 scheduler benchmark for UCB, ATS-style, BASS-style, and ASr-style task sampling;
+    \item finish the seed-0 scheduler benchmark for UCB, ATS-style, BASS-style, and ASR-style task sampling;
     \item optionally evaluate the GCP-style proxy as an appendix scheduler row;
     \item evaluate FOMAML, MAML, ANIL, Reptile, Matching Networks-style, Prototypical Networks-style, and R2D2-style ridge baselines under the selected fixed scheduler and compute budget;
     \item compare checkpoint-selection strategies across the full downstream sweep;
