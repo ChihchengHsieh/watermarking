@@ -1454,3 +1454,5 @@ global_step,step_time_sec,meta_loss,grad_norm,tasks
 1453,227.4182,0.000604,0.157908,blur|blur|blur
 1454,226.8065,0.001034,0.525729,blur|blur|blur
 1455,231.1583,0.059868,7.914128,blur|blur|occlusion
+1456,231.1483,0.007162,14.939232,clean|jpeg|jpeg
+1457,234.2944,0.000241,0.053132,downup50|clean|downup50

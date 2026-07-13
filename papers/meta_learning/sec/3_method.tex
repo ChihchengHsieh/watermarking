@@ -121,7 +121,7 @@ If parsing fails, the API times out, the schema is invalid, or the vector has th
 
 The agent never directly sets the sampling distribution.
 Every returned residual is clipped to the configured range $[-\rho_t,\rho_t]$, combined with the base policy, lower-bounded by a minimum task weight, and normalized locally.
-In the logged 2000-step agentic run and in the released training code, we start with a conservative residual budget of $\rho_t=0.15$ and switch to $\rho_t=0.5$ at meta-training step 400.
+In the 2000-step agentic run, we start with a conservative residual budget of $\rho_t=0.15$ and switch to $\rho_t=0.5$ at meta-training step 400.
 This progressive budget lets the agent first explore with small corrections and then, once task statistics become reliable, make stronger decisions about which attack types should be suppressed because they are saturated, over-sampled, or no longer yielding useful progress.
 The default agent call interval is 100 meta-training steps and the recent statistics window is 20 observations.
 All agent responses, rationales, cached residuals, API errors, call counts, and latency statistics are logged to the scheduler trace.
