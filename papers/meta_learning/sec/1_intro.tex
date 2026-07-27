@@ -1,12 +1,24 @@
 \section{Introduction}
 \label{sec:intro}
 
-Diffusion models have made high-quality image generation widely accessible~\cite{ho2020denoising,rombach2022high}, increasing the need for provenance mechanisms that can identify synthetic content after it has been shared, compressed, edited, or re-uploaded.
-Watermarking is a natural tool for this setting: a generator can embed an imperceptible signal into its outputs, and a verifier can later decide whether a queried image came from the protected generation pipeline.
-However, the practical verification problem is more difficult than clean-image detection.
-Images rarely remain untouched.
-They are recompressed by social platforms, resized by messaging applications, cropped by users, blurred by editing tools, and sometimes subjected to multiple transformations in sequence.
-A useful verifier must therefore be robust not only to individual perturbations, but also to the mismatch between the transformations seen during training and those encountered at test time.
+Diffusion models have made high-quality image generation widely accessible~\cite{ho2020denoising,rombach2022high}, creating an urgent need for provenance mechanisms that can identify synthetic content after it has been shared, compressed, edited, or re-uploaded. Watermarking provides a natural solution by embedding an imperceptible signal during image generation that can later be verified. However, robust verification remains challenging because images rarely remain unchanged. During dissemination, they are routinely compressed, resized, cropped, blurred, geometrically transformed, or subjected to multiple processing steps. Consequently, a practical watermark verifier must remain robust not only to individual perturbations but also to unseen combinations of transformations encountered at test time.
+
+%Diffusion models have made high-quality image generation widely accessible~\cite{ho2020denoising,rombach2022high}, increasing the need for provenance mechanisms that can identify synthetic content after it has been shared, compressed, edited, or re-uploaded.
+%Watermarking is a natural tool for this setting: a generator can embed an imperceptible signal into its outputs, and a verifier can later decide whether a queried image came from the protected generation pipeline.
+%However, the practical verification problem is more difficult than clean-image detection.
+%Images rarely remain untouched.
+%They are recompressed by social platforms, resized by messaging applications, cropped by users, blurred by editing tools, and sometimes subjected to multiple transformations in sequence.
+%A useful verifier must therefore be robust not only to individual perturbations, but also to the mismatch between the transformations seen during training and those encountered at test time.
+
+% %%%%%%%%%% Begin Jacinto %%%%%%%%%% %
+%The first component of our proposal is termed as a Spidermark that builds  on recent in-generation watermarking work for diffusion models~\cite{wen2023tree_ring,fernandez2023stable,yang2024gaussian,huang2024robin}. Specificaly, it injects a structured spider-web pattern into the Fourier representation of the initial diffusion noise The spider-web pattern combines radial and angular components. See Fig. XXX for an overall overview.
+
+%The second component is the verifier  that aims to detect the recovered spectral signature. In concrete the proposed verifier is based on a meta-learning framework with a novel task schedulling strategy. Concretely, a novel {\it agentic AI scheduler} is proposed, where we treat each attack condition as a task within a meta learning framework, and construct episodic verifier updates from support and query examples. 
+%During meta-training, the verifier first adapts on a support set sampled under one downstream transformation and is then optimized using the corresponding query set.
+%An agentic AI scheduler observes online meta-training signals, summarizes the recent behavior of each attack task, and proposes residual task-weight corrections that determine the next episode distribution.
+%This turns verifier training into a closed-loop process: attack episodes produce support/query losses, the agent interprets those signals, and the resulting task distribution changes the verifier's future training curriculum.
+
+% %%%%%%%%%% End Jacinto %%%%%%%%%% %
 
 SpiderMark builds on recent in-generation watermarking work for diffusion models~\cite{wen2023tree_ring,fernandez2023stable,yang2024gaussian,huang2024robin} and addresses several limitations of handcrafted frequency-domain detectors.
 It injects a structured spider-web pattern into the Fourier representation of the initial diffusion noise and trains a lightweight learned verifier to detect the recovered spectral signature.
@@ -28,12 +40,12 @@ The central claim is deliberately narrow and testable: an agentic scheduler can 
 This is different from claiming a new watermark pattern, a new diffusion generator, or a general-purpose meta-learning algorithm.
 It is an extension of SpiderMark focused on agentic control of verifier training.
 
-Our preliminary evaluation already indicates that this framing is promising.
-Using the current downstream checkpoint sweep, the meta-learned verifier selected at epoch 116 improves mean accuracy over nine attacks from 0.8499 to 0.9182 and mean AUROC from 0.9293 to 0.9686 compared with the non-meta SpiderMark verifier.
+%Our preliminary evaluation already indicates that this framing is promising.
+%Using the current downstream checkpoint sweep, the meta-learned verifier selected at epoch 116 improves mean accuracy over nine attacks from 0.8499 to 0.9182 and mean AUROC from 0.9293 to 0.9686 compared with the non-meta SpiderMark verifier.
 The improvement is consistent across all evaluated attacks, with particularly large gains under compound message-app processing, blur, and mixed augmentations.
 These results motivate a broader benchmark that compares not only against the original SpiderMark verifier, but also against strong task schedulers under matched attack episodes and compute budgets.
 
-The contributions of this paper draft are:
+The contributions are as follows:
 \begin{itemize}
     \item We introduce an agentic AI task scheduler for robust diffusion watermark verification, where an AI controller monitors online training signals and adaptively reweights downstream attack tasks.
     \item We formulate SpiderMark verifier training as closed-loop episodic meta-learning: support/query attack episodes update the verifier, while query feedback updates the scheduler's task distribution.

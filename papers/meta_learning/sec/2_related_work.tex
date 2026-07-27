@@ -1,21 +1,22 @@
 \section{Related Work}
 \label{sec:related}
 
-\paragraph{Diffusion watermarking.}
-Watermarking for generative models aims to provide machine-detectable provenance for generated content while preserving perceptual quality.
-Post-hoc image watermarking methods embed a signal after image generation, including learned encoder-decoder systems such as HiDDeN~\cite{zhu2018hidden}, but the embedded mark can be weakened or removed by common editing pipelines.
-In-generation watermarking instead modifies the generative process so that the watermark propagates through sampling.
-Tree-Ring watermarking embeds ring-like structures in the Fourier space of the initial diffusion noise~\cite{wen2023tree_ring}, while Stable Signature modifies the decoder so that generated images carry a recoverable signature~\cite{fernandez2023stable}.
-Other recent methods study latent-space embedding, distribution-preserving watermarking, and robustness to attacks~\cite{zhang2024attack,yang2024gaussian,huang2024robin}.
-SpiderMark follows the in-generation direction but replaces isotropic ring-style geometry with a spider-web frequency pattern and a learned probabilistic verifier.
+{\bf Diffusion watermarking.}
+Watermarking for generative models provides machine-detectable provenance while preserving image quality. Post-hoc methods embed watermarks after image generation, e.g., learned encoder-decoder frameworks such as HiDDeN~\cite{zhu2018hidden}, but are vulnerable to common editing operations. In-generation methods instead embed the watermark during image synthesis. Representative examples include Tree-Ring, which injects Fourier-domain ring patterns into the initial diffusion noise~\cite{wen2023tree_ring}, and Stable Signature, which embeds a recoverable signature by modifying the decoder~\cite{fernandez2023stable}. Other approaches explore latent-space watermarking, distribution-preserving embedding, and robustness to attacks~\cite{zhang2024attack,yang2024gaussian,huang2024robin}. SpiderMark follows the in-generation paradigm, replacing isotropic ring patterns with a spider-web frequency pattern and a learned probabilistic verifier.
+%Watermarking for generative models aims to provide machine-detectable provenance for generated content while preserving perceptual quality.
+%Post-hoc image watermarking methods embed a signal after image generation, including learned encoder-decoder systems such as HiDDeN~\cite{zhu2018hidden}, but the embedded mark can be weakened or removed by common editing pipelines.
+%In-generation watermarking instead modifies the generative process so that the watermark propagates through sampling.
+%Tree-Ring watermarking embeds ring-like structures in the Fourier space of the initial diffusion noise~\cite{wen2023tree_ring}, while Stable Signature modifies the decoder so that generated images carry a recoverable signature~\cite{fernandez2023stable}.
+%Other recent methods study latent-space embedding, distribution-preserving watermarking, and robustness to attacks~\cite{zhang2024attack,yang2024gaussian,huang2024robin}.
+%SpiderMark follows the in-generation direction but replaces isotropic ring-style geometry with a spider-web frequency pattern and a learned probabilistic verifier.
 
-\paragraph{Learned watermark verification.}
+{\bf Learned watermark verification.}
 Classical frequency-domain detectors often rely on handcrafted correlations, $\ell_1$ distances, PSNR-like scores, or fixed thresholds.
 Such detectors are interpretable and lightweight, but their operating thresholds can shift substantially across transformations.
 SpiderMark addresses this issue with a learned verifier that processes recovered frequency-domain representations and auxiliary watermark-aligned cues.
 The present work keeps this verifier-centric view but asks how the verifier should be trained when robustness depends on the distribution of downstream perturbations.
 
-\paragraph{Meta-learning and episodic robustness.}
+{\bf Meta-learning and episodic robustness.}
 Gradient-based meta-learning methods such as MAML~\cite{finn2017maml} and Reptile~\cite{nichol2018reptile} optimize model parameters so that a small number of task-specific updates yields strong query performance.
 ANIL studies whether MAML's gains come from rapid full-network adaptation or from feature reuse, and performs inner-loop updates only on the task-specific head~\cite{raghu2020rapid}.
 Metric-based meta-learners such as Matching Networks~\cite{vinyals2016matching} and Prototypical Networks~\cite{snell2017prototypical} classify queries by comparing support and query embeddings, while solver-based meta-learners such as R2D2~\cite{bertinetto2019meta} and MetaOptNet~\cite{lee2019metaoptnet} adapt closed-form or convex classifiers on top of learned embeddings.
@@ -23,15 +24,18 @@ This idea is especially relevant when training and testing conditions are organi
 For watermark verification, each downstream transformation induces a related but distinct classification task: the semantic labels remain clean versus watermarked, but the visible and spectral evidence changes.
 Agentic MetaSpiderMark uses this structure directly by sampling attack-conditioned support and query sets, then using their query feedback to guide future task exposure.
 
-\paragraph{Task scheduling, curricula, and agentic control.}
-The meta-learning objective determines how the verifier updates within a task, but the sequence of tasks also matters.
-Uniform sampling is simple and stable, while cyclic schedules ensure exposure to every attack.
-Hard-example mining and curriculum strategies can emphasize tasks that produce high loss or recent failure.
-This connects to curriculum learning, where the order and difficulty of training examples can shape generalization~\cite{bengio2009curriculum}.
-Recent adaptive task schedulers learn to select meta-training tasks from model-state signals, either through neural scheduling policies such as ATS~\cite{yao2021ats} or contextual-bandit formulations such as BASS~\cite{ban2023bass}.
-Other task-sampling methods emphasize diversity, difficulty, uncertainty, or class-combination utilities, as in Adaptive Sampler~\cite{wang2024tasksampler} and GCP-style curricula~\cite{liu2020adaptive}.
-Recent task-selection work such as DERTS~\cite{zhan2024derts} instead selects weighted task subsets to approximate full task-pool gradients, targeting data-efficient and noisy-task meta-learning without modifying the meta-learner architecture.
-Agentic AI offers a complementary design point: rather than learning a fixed scheduler model offline or relying on a scalar bandit reward, an agent can inspect structured online training summaries, reason over task difficulty and coverage, and issue bounded scheduling actions.
-Agentic MetaSpiderMark uses this idea as a verifier-side controller.
-The scheduler receives compact task statistics and proposes residual task-weight updates, while local constraints clip and normalize the action before it changes the next episode distribution.
-For the final benchmark, agentic scheduling should be compared directly against non-agentic schedulers so that improvements from verifier meta-learning are not confused with improvements from closed-loop task selection.
+
+{\bf Task scheduling, curricula, and agentic control.}
+The meta-learning objective determines how the verifier adapts within each task, but task scheduling also plays a critical role. Uniform and cyclic sampling provide stable coverage, while curriculum and hard-example mining prioritize difficult tasks to improve generalization~\cite{bengio2009curriculum}. Recent adaptive schedulers learn task-selection policies from model-state signals, including ATS~\cite{yao2021ats}, BASS~\cite{ban2023bass}, Adaptive Sampler~\cite{wang2024tasksampler}, GCP~\cite{liu2020adaptive}, and DERTS~\cite{zhan2024derts}. Agentic AI offers a complementary approach: instead of learning a fixed scheduler or relying on scalar rewards, an agent reasons over online training statistics to adaptively update task weights. Agentic MetaSpiderMark follows this paradigm by using verifier feedback to generate constrained task-weight updates for subsequent episodes. Our benchmark compares the proposed agentic scheduler with non-agentic alternatives, isolating the benefits of closed-loop task scheduling from those of verifier meta-learning.
+
+%The meta-learning objective determines how the verifier updates within a task, but the sequence of tasks also matters.
+%Uniform sampling is simple and stable, while cyclic schedules ensure exposure to every attack.
+%Hard-example mining and curriculum strategies can emphasize tasks that produce high loss or recent failure.
+%This connects to curriculum learning, where the order and difficulty of training examples can shape generalization~\cite{bengio2009curriculum}.
+%Recent adaptive task schedulers learn to select meta-training tasks from model-state signals, either through neural scheduling policies such as ATS~\cite{yao2021ats} or contextual-bandit formulations such as BASS~\cite{ban2023bass}.
+%Other task-sampling methods emphasize diversity, difficulty, uncertainty, or class-combination utilities, as in Adaptive Sampler~\cite{wang2024tasksampler} and GCP-style curricula~\cite{liu2020adaptive}.
+%Recent task-selection work such as DERTS~\cite{zhan2024derts} instead selects weighted task subsets to approximate full task-pool gradients, targeting data-efficient and noisy-task meta-learning without modifying the meta-learner architecture.
+%Agentic AI offers a complementary design point: rather than learning a fixed scheduler model offline or relying on a scalar bandit reward, an agent can inspect structured online training summaries, reason over task difficulty and coverage, and issue bounded scheduling actions.
+%Agentic MetaSpiderMark uses this idea as a verifier-side controller.
+%The scheduler receives compact task statistics and proposes residual task-weight updates, while local constraints clip and normalize the action before it changes the next episode distribution.
+%For the final benchmark, agentic scheduling should be compared directly against non-agentic schedulers so that improvements from verifier meta-learning are not confused with improvements from closed-loop task selection.
