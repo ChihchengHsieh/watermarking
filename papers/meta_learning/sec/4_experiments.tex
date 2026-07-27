@@ -1,6 +1,16 @@
 \section{Experiments}
 \label{sec:experiments}
 
+\subsection{Backbone Selection}
+
+Before studying verifier meta-learning, we compare candidate watermarking backbones under dataset shift.
+Table~\ref{tab:coco_four_methods} reproduces the preceding SpiderMark study's controlled evaluation on COCO, which is unseen during training.
+All four methods are evaluated with the same images and downstream transformations.
+SpiderMark obtains the highest accuracy and AUROC under every reported attack while retaining an FID close to the non-watermarked reference.
+We therefore keep SpiderMark as the fixed watermarking backbone and study whether its verifier training can be improved through attack-conditioned meta-learning and adaptive task scheduling.
+
+\input{benchmark_outputs/coco_backbone_selection}
+
 \subsection{Current Evidence}
 
 We first summarize the current downstream checkpoint sweep that motivated the agentic scheduler design.

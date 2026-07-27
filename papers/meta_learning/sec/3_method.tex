@@ -4,7 +4,7 @@
 \label{sec:method}
 
 \subsection{Preliminaries}
-\textbf{Meta learning:} Aims to develop a learning paradigm capable of acquiring knowledge that generalizes across a variety of (possibly new) tasks (see Fig. \ref{fig:Architecture} for an overview). This concept of 
+\textbf{Meta learning:} Aims to develop a learning paradigm capable of acquiring knowledge that generalizes across a variety of (possibly new) tasks (see Fig.~\ref{fig:method_overview} for an overview). This concept of 
 ``{\it learning to learn}'' can be formally characterized as follows:
 \begin{equation}
 \min_{\omega} 	
@@ -26,7 +26,10 @@ Solving~\cref{eq:meta} assumes access to source tasks sampled from $p(\mathcal{T
 \end{equation}
 %As shown later in Sec.~\ref{sec:Meta}, Eq.~\ref{eq:meta_training_0} is solved using a bi-level optimization approach.
 
-\textcolor{red}{In the preliminaries describe briefly the spidermark}
+\textbf{SpiderMark:}
+SpiderMark is an in-generation diffusion watermarking framework that blends a fixed spider-web pattern into the Fourier representation of the initial latent noise.
+At verification time, it reconstructs an estimate of the initial latent from a query image and uses a learned frequency-domain verifier, optionally augmented with PSNR and $\ell_1$ similarity cues, to predict watermark presence.
+We keep the watermark pattern, diffusion generator, inversion procedure, and verifier architecture unchanged and modify only how the verifier is trained.
 
 
 \subsection{Problem Setup}
@@ -49,11 +52,12 @@ The goal is to learn verifier parameters $\theta$ that adapt from $\mathcal{S}_k
 
 \begin{figure*}[t]
     \centering
-    \includegraphics[width=0.95\textwidth]{figures/metaspidermark_overview_imagegen.png}
+    \includegraphics[width=\textwidth]{figures/metaspidermark_overview_inner_outer_imagegen.png}
     \caption{\textbf{Agentic MetaSpiderMark overview.}
-    SpiderMark generates watermarked images using its frequency-domain pattern, and verifier training is organized into attack-conditioned support/query episodes.
-    The meta-learned verifier reports online training signals to an agentic scheduler, which converts those signals into task weights for subsequent episodes.
-    The resulting closed loop adaptively controls downstream attack exposure during verifier meta-training.}
+    The fixed SpiderMark injection pipeline produces clean and watermarked images without modifying the diffusion generator.
+    A task sampler constructs attack-conditioned support and query sets.
+    In the inner loop, support examples adapt the shared verifier parameters from $\theta$ to $\theta'_k$; in the outer loop, query loss evaluated at $\theta'_k$ updates the shared initialization $\theta$.
+    Query loss, failure rate, uncertainty, and sampling history provide a separate feedback path to the agentic scheduler, whose bounded task weights control subsequent attack sampling rather than watermark injection.}
     \label{fig:method_overview}
 \end{figure*}
 
