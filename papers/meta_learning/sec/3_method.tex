@@ -1,7 +1,37 @@
+
+
 \section{Method}
 \label{sec:method}
 
+\subsection{Preliminaries}
+\textbf{Meta learning:} Aims to develop a learning paradigm capable of acquiring knowledge that generalizes across a variety of (possibly new) tasks (see Fig. \ref{fig:Architecture} for an overview). This concept of 
+``{\it learning to learn}'' can be formally characterized as follows:
+\begin{equation}
+\min_{\omega} 	
+\mathbb{E}_{ \tau \sim p({\cal T})}\;%{{\cal T}_{\tau}\sim p({\cal T})}\; 
+{\cal L}( D_{\tau};\omega),
+\label{eq:meta}
+\end{equation}
+where $\tau$ %${\cal T}_{\tau}$ 
+denotes the $\tau$-th task sampled from $p(\cal T)$, 
+$D_\tau$ represents that dataset of task ${\tau}$, and
+%${\cal L}(D;\omega)$ 
+${\cal L}(D_{\tau};\omega)$
+measures the model performance trained  with $\omega$ on the dataset $D_{\tau}$. In ~\cref{eq:meta}, $\omega$ is known as {\it meta} or {\it across-task} knowledge~\cite{hospedales2021meta}. 
+%Solving ~\cref{eq:meta} requires to assume access to a set of source tasks, i.e.  in $D_s$, sampled from $p({\cal T})$, using  {\it support} (training $D_{S}^{\rm tr}$) and {\it query} (validation $D_{S}^{\rm val}$) sets that are used in the meta training as follows:
+Solving~\cref{eq:meta} assumes access to source tasks sampled from $p(\mathcal{T})$. Each task is associated with its own dataset $D_s$,  partitioned into a \emph{support} (training) set $D_{S}^{\rm tr}$ and a \emph{query} (validation) set $D_{S}^{\rm val}$  that are used in the meta training:
+\begin{equation}
+    \omega^{\star} =  \arg\max_{\omega}  \log p(\omega| D_S).
+    \label{eq:meta_training_0}
+\end{equation}
+%As shown later in Sec.~\ref{sec:Meta}, Eq.~\ref{eq:meta_training_0} is solved using a bi-level optimization approach.
+
+\textcolor{red}{In the preliminaries describe briefly the spidermark}
+
+
 \subsection{Problem Setup}
+
+
 
 Let $\mathcal{G}$ denote a pretrained diffusion generator and let $W$ be the fixed SpiderMark frequency-domain watermark pattern.
 For a prompt $p$ and initial latent noise $x_T$, SpiderMark generates a clean image from $x_T$ and a watermarked image from a modified latent whose Fourier representation is blended with $W$.
