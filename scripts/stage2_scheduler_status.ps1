@@ -5,6 +5,18 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+$RequiredEvaluationProtocol = "episodic_adaptation_v1"
+
+function Test-ValidEvaluationCsv {
+    param([string]$Path)
+    if (!(Test-Path $Path)) { return $false }
+    $first = Import-Csv $Path | Select-Object -First 1
+    return (
+        $null -ne $first -and
+        $first.PSObject.Properties.Name -contains "evaluation_protocol" -and
+        $first.evaluation_protocol -eq $RequiredEvaluationProtocol
+    )
+}
 
 if (!(Test-Path $ManifestCsv)) {
     throw "Manifest CSV not found: $ManifestCsv. Generate it with scripts\stage2_scheduler_manifest.ps1"
@@ -24,7 +36,8 @@ $rows = Import-Csv $ManifestCsv | Sort-Object `
 
 $status = foreach ($row in $rows) {
     $hasCheckpoint = Test-Path $row.checkpoint_path
-    $hasEval = Test-Path $row.eval_csv
+    $evalExists = Test-Path $row.eval_csv
+    $hasEval = Test-ValidEvaluationCsv $row.eval_csv
     $state = if ($hasEval) {
         "evaluated"
     } elseif ($hasCheckpoint) {
@@ -39,7 +52,7 @@ $status = foreach ($row in $rows) {
         seed = [int]$row.seed
         state = $state
         checkpoint = if ($hasCheckpoint) { "yes" } else { "no" }
-        eval_csv = if ($hasEval) { "yes" } else { "no" }
+        eval_csv = if ($hasEval) { "yes" } elseif ($evalExists) { "stale" } else { "no" }
     }
 }
 

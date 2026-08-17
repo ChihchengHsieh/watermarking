@@ -1,0 +1,1478 @@
+{
+  "surface": "report",
+  "manifest": {
+    "version": 1,
+    "surface": "report",
+    "title": "Accuracy-First Watermark Method Evaluation",
+    "description": "Confidence-interval comparison of six methods across clean data and eight attacks.",
+    "generatedAt": "2026-08-14T14:42:19Z",
+    "cards": [
+      {
+        "id": "accuracy_coleaders",
+        "description": "Equal-weight mean accuracy across eight attacks; both methods use a fixed 0.5 threshold.",
+        "dataset": "headline_metrics",
+        "sourceId": "paired_bootstrap_results",
+        "metrics": [
+          {
+            "label": "MetaSpiderMark accuracy",
+            "field": "meta_accuracy",
+            "format": "percent"
+          },
+          {
+            "label": "ASR accuracy",
+            "field": "asr_accuracy",
+            "format": "percent"
+          }
+        ]
+      },
+      {
+        "id": "accuracy_difference",
+        "description": "Paired MetaSpiderMark-minus-ASR accuracy difference and percentile 95% CI, in percentage points.",
+        "dataset": "headline_metrics",
+        "sourceId": "paired_bootstrap_results",
+        "metrics": [
+          {
+            "label": "Accuracy difference (pp)",
+            "field": "accuracy_diff_pp",
+            "format": "number",
+            "signed": true
+          },
+          {
+            "label": "CI low",
+            "field": "accuracy_diff_ci_low_pp",
+            "format": "number",
+            "signed": true
+          },
+          {
+            "label": "CI high",
+            "field": "accuracy_diff_ci_high_pp",
+            "format": "number",
+            "signed": true
+          }
+        ]
+      },
+      {
+        "id": "auc_difference",
+        "description": "Paired MetaSpiderMark-minus-ATS AUROC difference and percentile 95% CI, in percentage points.",
+        "dataset": "headline_metrics",
+        "sourceId": "paired_bootstrap_results",
+        "metrics": [
+          {
+            "label": "AUROC difference (pp)",
+            "field": "auc_diff_pp",
+            "format": "number",
+            "signed": true
+          },
+          {
+            "label": "CI low",
+            "field": "auc_diff_ci_low_pp",
+            "format": "number",
+            "signed": true
+          },
+          {
+            "label": "CI high",
+            "field": "auc_diff_ci_high_pp",
+            "format": "number",
+            "signed": true
+          }
+        ]
+      },
+      {
+        "id": "uniform_floor",
+        "description": "Highest minimum accuracy across the nine evaluated conditions.",
+        "dataset": "headline_metrics",
+        "sourceId": "paired_bootstrap_results",
+        "metrics": [
+          {
+            "label": "Best worst-case accuracy",
+            "field": "uniform_worst_accuracy",
+            "format": "percent"
+          }
+        ]
+      }
+    ],
+    "charts": [
+      {
+        "id": "accuracy_ranking",
+        "title": "Attack Mean Accuracy by Method",
+        "subtitle": "Fixed threshold of 0.5; equal-weight mean across eight attacks; 95% CIs appear in tooltips and the table",
+        "showDescription": true,
+        "type": "horizontalBar",
+        "intent": "comparison",
+        "dataset": "method_summary",
+        "sourceId": "paired_bootstrap_results",
+        "valueFormat": "percent",
+        "encodings": {
+          "x": {
+            "field": "method",
+            "type": "nominal",
+            "label": "Method"
+          },
+          "y": {
+            "field": "avg_accuracy_attacks",
+            "type": "quantitative",
+            "label": "Mean accuracy",
+            "format": "percent"
+          },
+          "tooltip": [
+            {
+              "field": "accuracy_ci_low",
+              "type": "quantitative",
+              "label": "95% CI low",
+              "format": "percent"
+            },
+            {
+              "field": "accuracy_ci_high",
+              "type": "quantitative",
+              "label": "95% CI high",
+              "format": "percent"
+            },
+            {
+              "field": "worst_accuracy",
+              "type": "quantitative",
+              "label": "Worst-case accuracy",
+              "format": "percent"
+            }
+          ]
+        },
+        "layout": "full"
+      },
+      {
+        "id": "condition_accuracy",
+        "title": "Accuracy Across All Evaluation Conditions",
+        "subtitle": "Six methods across nine conditions at a fixed 0.5 threshold",
+        "showDescription": true,
+        "type": "heatmap",
+        "intent": "comparison",
+        "dataset": "condition_results",
+        "sourceId": "controlled_six_results",
+        "valueFormat": "percent",
+        "encodings": {
+          "x": {
+            "field": "condition",
+            "type": "nominal",
+            "label": "Evaluation condition"
+          },
+          "y": {
+            "field": "accuracy",
+            "type": "quantitative",
+            "label": "Accuracy",
+            "format": "percent"
+          },
+          "color": {
+            "field": "method",
+            "type": "nominal",
+            "label": "Method"
+          },
+          "tooltip": [
+            {
+              "field": "auc",
+              "type": "quantitative",
+              "label": "AUROC",
+              "format": "percent"
+            },
+            {
+              "field": "checkpoint_epoch",
+              "type": "quantitative",
+              "label": "Checkpoint epoch"
+            }
+          ]
+        },
+        "layout": "full"
+      },
+      {
+        "id": "auc_ranking",
+        "title": "Attack Mean AUROC by Method",
+        "subtitle": "Secondary metric; equal-weight mean across eight attacks; 95% CIs appear in tooltips and the table",
+        "showDescription": true,
+        "type": "horizontalBar",
+        "intent": "comparison",
+        "dataset": "method_auc_summary",
+        "sourceId": "paired_bootstrap_results",
+        "valueFormat": "percent",
+        "encodings": {
+          "x": {
+            "field": "method",
+            "type": "nominal",
+            "label": "Method"
+          },
+          "y": {
+            "field": "avg_auc_attacks",
+            "type": "quantitative",
+            "label": "Mean AUROC",
+            "format": "percent"
+          },
+          "tooltip": [
+            {
+              "field": "auc_ci_low",
+              "type": "quantitative",
+              "label": "95% CI low",
+              "format": "percent"
+            },
+            {
+              "field": "auc_ci_high",
+              "type": "quantitative",
+              "label": "95% CI high",
+              "format": "percent"
+            },
+            {
+              "field": "worst_auc",
+              "type": "quantitative",
+              "label": "Worst-case AUROC",
+              "format": "percent"
+            }
+          ]
+        },
+        "layout": "full"
+      }
+    ],
+    "tables": [
+      {
+        "id": "paired_comparison_table",
+        "title": "Paired Confidence-Interval Comparisons",
+        "subtitle": "MetaSpiderMark versus the closest comparator for each headline metric",
+        "showDescription": true,
+        "dataset": "paired_comparison",
+        "sourceId": "paired_bootstrap_results",
+        "defaultSort": {
+          "field": "metric",
+          "direction": "asc"
+        },
+        "density": "spacious",
+        "layout": "full",
+        "columns": [
+          {
+            "field": "metric",
+            "label": "Metric",
+            "type": "text"
+          },
+          {
+            "field": "candidate",
+            "label": "Candidate",
+            "type": "text"
+          },
+          {
+            "field": "comparator",
+            "label": "Comparator",
+            "type": "text"
+          },
+          {
+            "field": "candidate_value",
+            "label": "Candidate value",
+            "format": "percent"
+          },
+          {
+            "field": "comparator_value",
+            "label": "Comparator value",
+            "format": "percent"
+          },
+          {
+            "field": "difference_pp",
+            "label": "Difference (pp)",
+            "format": "number"
+          },
+          {
+            "field": "ci_low_pp",
+            "label": "95% CI low (pp)",
+            "format": "number"
+          },
+          {
+            "field": "ci_high_pp",
+            "label": "95% CI high (pp)",
+            "format": "number"
+          },
+          {
+            "field": "conclusion",
+            "label": "Interpretation",
+            "type": "text"
+          }
+        ]
+      },
+      {
+        "id": "method_ranking_table",
+        "title": "Accuracy-First Ranking with 95% Confidence Intervals",
+        "subtitle": "Attack means across 750 paired examples and eight equally weighted attacks",
+        "showDescription": true,
+        "dataset": "method_summary",
+        "sourceId": "paired_bootstrap_results",
+        "defaultSort": {
+          "field": "accuracy_rank",
+          "direction": "asc"
+        },
+        "density": "spacious",
+        "layout": "full",
+        "columns": [
+          {
+            "field": "accuracy_rank",
+            "label": "Accuracy rank",
+            "format": "number"
+          },
+          {
+            "field": "method",
+            "label": "Method",
+            "type": "text"
+          },
+          {
+            "field": "avg_accuracy_attacks",
+            "label": "Mean accuracy",
+            "format": "percent"
+          },
+          {
+            "field": "accuracy_ci_low",
+            "label": "Accuracy CI low",
+            "format": "percent"
+          },
+          {
+            "field": "accuracy_ci_high",
+            "label": "Accuracy CI high",
+            "format": "percent"
+          },
+          {
+            "field": "worst_accuracy",
+            "label": "Worst accuracy",
+            "format": "percent"
+          },
+          {
+            "field": "avg_auc_attacks",
+            "label": "Mean AUROC",
+            "format": "percent"
+          },
+          {
+            "field": "auc_ci_low",
+            "label": "AUROC CI low",
+            "format": "percent"
+          },
+          {
+            "field": "auc_ci_high",
+            "label": "AUROC CI high",
+            "format": "percent"
+          }
+        ]
+      }
+    ],
+    "sources": [
+      {
+        "id": "controlled_six_results",
+        "label": "Controlled six-method paired evaluation summary",
+        "path": "eval_results/stage2_controlled_six_paired/combined_attack_eval_summary.csv",
+        "query": {
+          "engine": "sqlite",
+          "sql": "SELECT checkpoint_label, attack, CAST(our_auc AS REAL) AS our_auc, CAST(our_acc AS REAL) AS our_acc, CAST(best_our_thr AS REAL) AS best_our_thr, CAST(checkpoint_epoch AS INTEGER) AS checkpoint_epoch, evaluation_protocol FROM controlled_six_results",
+          "description": "Loads the completed 54-row summary after importing the CSV into SQLite.",
+          "executed_at": "2026-08-14T14:42:19Z",
+          "language": "sql",
+          "filters": [
+            "All six methods",
+            "All nine conditions",
+            "Fixed learned-model threshold of 0.5"
+          ],
+          "metric_definitions": [
+            "Attack mean accuracy: equal-weight arithmetic mean of fixed-0.5-threshold accuracy across eight non-clean attacks.",
+            "Attack mean AUROC: equal-weight arithmetic mean of AUROC across eight non-clean attacks.",
+            "Worst-case accuracy and AUROC: minimum value across all nine evaluation conditions."
+          ],
+          "tables_used": [
+            "controlled_six_results"
+          ]
+        }
+      },
+      {
+        "id": "paired_bootstrap_results",
+        "label": "Paired bootstrap confidence-interval analysis",
+        "path": "generate_meeting_report.py",
+        "query": {
+          "engine": "sqlite",
+          "sql": "SELECT method_id, method, accuracy_rank, auc_rank, avg_accuracy_attacks, accuracy_ci_low, accuracy_ci_high, worst_accuracy, avg_auc_attacks, auc_ci_low, auc_ci_high, worst_auc FROM paired_bootstrap_results",
+          "description": "Reads method-level point estimates and paired bootstrap confidence intervals computed from the 54 per-example eval_results.pt files.",
+          "executed_at": "2026-08-14T14:42:19Z",
+          "language": "sql",
+          "filters": [
+            "Prediction files under eval_results/stage2_controlled_six_paired",
+            "750 aligned examples: 395 positive and 355 negative",
+            "Eight non-clean attacks receive equal weight",
+            "Accuracy: 10,000 stratified paired bootstrap resamples",
+            "AUROC: 3,000 stratified paired bootstrap resamples",
+            "Bootstrap seed: 19980802"
+          ],
+          "metric_definitions": [
+            "Accuracy uses the fixed 0.5 learned-model threshold in the evaluation code.",
+            "Each bootstrap resample preserves class counts and uses identical sampled example indices across methods and attacks.",
+            "Intervals are percentile 95% confidence intervals over the fixed trained checkpoints and evaluation sample; they do not include training-seed variability."
+          ],
+          "tables_used": [
+            "paired_bootstrap_results"
+          ]
+        }
+      }
+    ],
+    "blocks": [
+      {
+        "id": "title",
+        "type": "markdown",
+        "body": "# Accuracy-First Watermark Method Evaluation"
+      },
+      {
+        "id": "executive_summary",
+        "type": "markdown",
+        "sourceId": "paired_bootstrap_results",
+        "body": "## Executive Summary\n\n- **Accuracy does not separate MetaSpiderMark from ASR.** Both reach **90.17% attack mean accuracy**. The paired difference is **0.00 percentage points**, with a **95% CI of -0.72 to +0.70 points**.\n- **The accuracy-first conclusion is a tie.** The interval crosses zero, so neither method is demonstrably better on average accuracy for these fixed checkpoints and this evaluation sample.\n- **AUROC provides a secondary tie-breaker.** MetaSpiderMark reaches **96.38% attack mean AUROC** versus **95.50% for ATS**; its paired lead is **+0.89 points (95% CI: +0.55 to +1.24)**.\n- **Uniform has the strongest accuracy floor.** Its worst-condition accuracy is **78.00%**, higher than MetaSpiderMark at **75.33%** and ASR at **74.67%**."
+      },
+      {
+        "id": "headline_metrics",
+        "type": "metric-strip",
+        "cardIds": [
+          "accuracy_coleaders",
+          "accuracy_difference",
+          "auc_difference",
+          "uniform_floor"
+        ]
+      },
+      {
+        "id": "definitions",
+        "type": "markdown",
+        "body": "## Decision Rule and Confidence-Interval Scope\n\n**Accuracy is the primary metric and uses the evaluation code's fixed threshold of 0.5.** Methods are compared using the equal-weight mean across eight non-clean attacks. The paired bootstrap resamples the same 750 aligned examples across every method and attack while preserving the observed class counts. These intervals measure evaluation-sample uncertainty for the existing checkpoints; they do not include retraining variability."
+      },
+      {
+        "id": "accuracy_finding",
+        "type": "markdown",
+        "sourceId": "paired_bootstrap_results",
+        "body": "## MetaSpiderMark and ASR Are Accuracy Co-Leaders\n\n**Both methods achieve 90.17% mean accuracy across the eight attacks.** Their paired difference interval, **-0.72 to +0.70 percentage points**, spans zero and is centered at no difference. The current evidence therefore supports a tie, not an accuracy win for either method."
+      },
+      {
+        "id": "accuracy_chart",
+        "type": "chart",
+        "chartId": "accuracy_ranking"
+      },
+      {
+        "id": "accuracy_interpretation",
+        "type": "markdown",
+        "body": "**Implication:** If average accuracy is the only decision criterion, retain both MetaSpiderMark and ASR as co-leaders. Use the production attack mix, computational cost, or a predeclared secondary metric to choose between them."
+      },
+      {
+        "id": "condition_finding",
+        "type": "markdown",
+        "sourceId": "controlled_six_results",
+        "body": "## The Tie Hides Different Condition-Level Strengths\n\n**MetaSpiderMark leads under Strong JPEG and Down/up sampling, while ASR leads under Messaging-app combo, Blur, and Occlusion.** BASS leads Random crop, ATS leads Geometric warp, and Uniform leads Training augmentation mix. A deployment-weighted accuracy score could therefore change the preferred method."
+      },
+      {
+        "id": "condition_chart",
+        "type": "chart",
+        "chartId": "condition_accuracy"
+      },
+      {
+        "id": "condition_interpretation",
+        "type": "markdown",
+        "body": "**Implication:** Equal weighting is suitable for a neutral benchmark, but the final deployment choice should be recalculated if real-world attack frequencies are known."
+      },
+      {
+        "id": "auc_finding",
+        "type": "markdown",
+        "sourceId": "paired_bootstrap_results",
+        "body": "## AUROC Favors MetaSpiderMark as a Secondary Metric\n\n**MetaSpiderMark's 96.38% attack mean AUROC exceeds ATS by 0.89 percentage points.** The paired **95% CI of +0.55 to +1.24 points** remains above zero. This supports MetaSpiderMark as a practical tie-breaker when ranking quality matters after the accuracy tie."
+      },
+      {
+        "id": "auc_chart",
+        "type": "chart",
+        "chartId": "auc_ranking"
+      },
+      {
+        "id": "auc_interpretation",
+        "type": "markdown",
+        "body": "**Implication:** Do not describe MetaSpiderMark as the accuracy winner. It is the AUROC leader and can be selected only if AUROC is accepted as a secondary decision criterion."
+      },
+      {
+        "id": "ci_detail",
+        "type": "markdown",
+        "body": "## What the Confidence Intervals Establish\n\nThe paired intervals directly test the relevant method differences. Overlap between separate method intervals is not the decision test; the paired difference interval is. Accuracy crosses zero, while the AUROC difference remains positive."
+      },
+      {
+        "id": "paired_ci_table",
+        "type": "table",
+        "tableId": "paired_comparison_table"
+      },
+      {
+        "id": "ranking_detail",
+        "type": "markdown",
+        "body": "## Full Accuracy-First Ranking\n\nThe table preserves exact point estimates and method-level bootstrap intervals for both metrics. Accuracy rank is the primary ordering; AUROC is supporting context."
+      },
+      {
+        "id": "ranking_table_block",
+        "type": "table",
+        "tableId": "method_ranking_table"
+      },
+      {
+        "id": "recommendations",
+        "type": "markdown",
+        "body": "## Recommended Meeting Position\n\n1. **Report MetaSpiderMark and ASR as tied on average accuracy.** Do not claim an accuracy winner from this evaluation.\n2. **Use MetaSpiderMark as the practical default only if AUROC is an accepted secondary criterion.** Its paired AUROC lead is positive throughout the 95% interval.\n3. **Use Uniform when the worst-case accuracy floor is more important than average accuracy.**\n4. **Keep the inference claim scoped to the fixed trained checkpoints.** New training seeds would be required to generalize over retraining variability."
+      },
+      {
+        "id": "further_questions",
+        "type": "markdown",
+        "body": "## Questions to Resolve After the Meeting\n\n- What is the production frequency of each attack, and should the benchmark remain equally weighted?\n- Is average accuracy or worst-case accuracy the deployment objective?\n- Should AUROC, latency, or model size be the formal tie-breaker between MetaSpiderMark and ASR?"
+      },
+      {
+        "id": "caveats",
+        "type": "markdown",
+        "sourceId": "paired_bootstrap_results",
+        "body": "## Caveats and Assumptions\n\n- The 95% intervals quantify evaluation-sample uncertainty for one fixed checkpoint per method; they do not include training-seed or checkpoint-selection variability.\n- The bootstrap uses 750 paired examples with 395 positive and 355 negative labels and preserves those class counts.\n- The eight attacks receive equal weight. Rankings may change under a different production attack distribution.\n- Accuracy uses a fixed learned-model threshold of 0.5. The saved `best_our_thr` values are not used for `our_acc`.\n- Methods use different selected checkpoint epochs; this is a selected-checkpoint comparison, not a fixed-training-step comparison."
+      }
+    ]
+  },
+  "snapshot": {
+    "version": 1,
+    "generatedAt": "2026-08-14T14:42:19Z",
+    "status": "ready",
+    "datasets": {
+      "headline_metrics": [
+        {
+          "meta_accuracy": 0.9016666666666666,
+          "asr_accuracy": 0.9016666666666667,
+          "accuracy_diff_pp": 0.0,
+          "accuracy_diff_ci_low_pp": -0.7166666666666766,
+          "accuracy_diff_ci_high_pp": 0.7000000000000117,
+          "meta_auc": 0.9638375824567659,
+          "ats_auc": 0.9549799429488322,
+          "auc_diff_pp": 0.8857639507933723,
+          "auc_diff_ci_low_pp": 0.5479530665002655,
+          "auc_diff_ci_high_pp": 1.2376147709038978,
+          "uniform_worst_accuracy": 0.78
+        }
+      ],
+      "method_summary": [
+        {
+          "method_id": "asr",
+          "method": "ASR",
+          "avg_accuracy_attacks": 0.9016666666666667,
+          "avg_accuracy_all": 0.9103703703703704,
+          "worst_accuracy": 0.7466666666666667,
+          "clean_accuracy": 0.98,
+          "avg_auc_attacks": 0.9543608486361205,
+          "avg_auc_all": 0.9594120560210772,
+          "worst_auc": 0.8414191477981815,
+          "clean_auc": 0.999821715100731,
+          "accuracy_wins": 3,
+          "auc_wins": 2,
+          "checkpoint_epoch": 5,
+          "accuracy_ci_low": 0.8906666666666666,
+          "accuracy_ci_high": 0.9123333333333332,
+          "auc_ci_low": 0.9469140889641647,
+          "auc_ci_high": 0.9613174139775362,
+          "accuracy_rank": 1,
+          "auc_rank": 3
+        },
+        {
+          "method_id": "metaspidermark_original",
+          "method": "MetaSpiderMark (original)",
+          "avg_accuracy_attacks": 0.9016666666666666,
+          "avg_accuracy_all": 0.9111111111111112,
+          "worst_accuracy": 0.7533333333333333,
+          "clean_accuracy": 0.9866666666666667,
+          "avg_auc_attacks": 0.9638375824567659,
+          "avg_auc_all": 0.967796200550702,
+          "worst_auc": 0.8782242824032804,
+          "clean_auc": 0.999465145302193,
+          "accuracy_wins": 3,
+          "auc_wins": 6,
+          "checkpoint_epoch": 49,
+          "accuracy_ci_low": 0.891,
+          "accuracy_ci_high": 0.9116666666666666,
+          "auc_ci_low": 0.9569017650205026,
+          "auc_ci_high": 0.9703897307898022,
+          "accuracy_rank": 1,
+          "auc_rank": 1
+        },
+        {
+          "method_id": "uniform",
+          "method": "Uniform",
+          "avg_accuracy_attacks": 0.8896666666666667,
+          "avg_accuracy_all": 0.8997037037037037,
+          "worst_accuracy": 0.78,
+          "clean_accuracy": 0.98,
+          "avg_auc_attacks": 0.9533624532002138,
+          "avg_auc_all": 0.9584849745448784,
+          "worst_auc": 0.8718702085933323,
+          "clean_auc": 0.999465145302193,
+          "accuracy_wins": 1,
+          "auc_wins": 0,
+          "checkpoint_epoch": 64,
+          "accuracy_ci_low": 0.8771666666666667,
+          "accuracy_ci_high": 0.9015,
+          "auc_ci_low": 0.9449584596184704,
+          "auc_ci_high": 0.9611962693884828,
+          "accuracy_rank": 3,
+          "auc_rank": 4
+        },
+        {
+          "method_id": "ats",
+          "method": "ATS",
+          "avg_accuracy_attacks": 0.8889999999999999,
+          "avg_accuracy_all": 0.8991111111111112,
+          "worst_accuracy": 0.7693333333333333,
+          "clean_accuracy": 0.98,
+          "avg_auc_attacks": 0.9549799429488322,
+          "avg_auc_all": 0.9599227432103168,
+          "worst_auc": 0.8632412194687109,
+          "clean_auc": 0.999465145302193,
+          "accuracy_wins": 1,
+          "auc_wins": 0,
+          "checkpoint_epoch": 13,
+          "accuracy_ci_low": 0.8771666666666667,
+          "accuracy_ci_high": 0.9001666666666667,
+          "auc_ci_low": 0.9471269499910857,
+          "auc_ci_high": 0.9623096362988055,
+          "accuracy_rank": 4,
+          "auc_rank": 2
+        },
+        {
+          "method_id": "bandit_ucb",
+          "method": "Bandit UCB",
+          "avg_accuracy_attacks": 0.8825,
+          "avg_accuracy_all": 0.8925925925925926,
+          "worst_accuracy": 0.7653333333333333,
+          "clean_accuracy": 0.9733333333333334,
+          "avg_auc_attacks": 0.9466714209306472,
+          "avg_auc_all": 0.9524977714387592,
+          "worst_auc": 0.865423426635764,
+          "clean_auc": 0.9991085755036548,
+          "accuracy_wins": 0,
+          "auc_wins": 0,
+          "checkpoint_epoch": 87,
+          "accuracy_ci_low": 0.8701666666666666,
+          "accuracy_ci_high": 0.8943333333333334,
+          "auc_ci_low": 0.9381852380103406,
+          "auc_ci_high": 0.9550244250311999,
+          "accuracy_rank": 5,
+          "auc_rank": 6
+        },
+        {
+          "method_id": "bass",
+          "method": "BASS",
+          "avg_accuracy_attacks": 0.8741666666666666,
+          "avg_accuracy_all": 0.8866666666666666,
+          "worst_accuracy": 0.7533333333333333,
+          "clean_accuracy": 0.9866666666666667,
+          "avg_auc_attacks": 0.9502986272062757,
+          "avg_auc_all": 0.9557813830946296,
+          "worst_auc": 0.8627705473346408,
+          "clean_auc": 0.999643430201462,
+          "accuracy_wins": 2,
+          "auc_wins": 1,
+          "checkpoint_epoch": 87,
+          "accuracy_ci_low": 0.8621666666666666,
+          "accuracy_ci_high": 0.8855,
+          "auc_ci_low": 0.9415528169014085,
+          "auc_ci_high": 0.9582353583526476,
+          "accuracy_rank": 6,
+          "auc_rank": 5
+        }
+      ],
+      "method_auc_summary": [
+        {
+          "method_id": "metaspidermark_original",
+          "method": "MetaSpiderMark (original)",
+          "avg_accuracy_attacks": 0.9016666666666666,
+          "avg_accuracy_all": 0.9111111111111112,
+          "worst_accuracy": 0.7533333333333333,
+          "clean_accuracy": 0.9866666666666667,
+          "avg_auc_attacks": 0.9638375824567659,
+          "avg_auc_all": 0.967796200550702,
+          "worst_auc": 0.8782242824032804,
+          "clean_auc": 0.999465145302193,
+          "accuracy_wins": 3,
+          "auc_wins": 6,
+          "checkpoint_epoch": 49,
+          "accuracy_ci_low": 0.891,
+          "accuracy_ci_high": 0.9116666666666666,
+          "auc_ci_low": 0.9569017650205026,
+          "auc_ci_high": 0.9703897307898022,
+          "accuracy_rank": 1,
+          "auc_rank": 1
+        },
+        {
+          "method_id": "ats",
+          "method": "ATS",
+          "avg_accuracy_attacks": 0.8889999999999999,
+          "avg_accuracy_all": 0.8991111111111112,
+          "worst_accuracy": 0.7693333333333333,
+          "clean_accuracy": 0.98,
+          "avg_auc_attacks": 0.9549799429488322,
+          "avg_auc_all": 0.9599227432103168,
+          "worst_auc": 0.8632412194687109,
+          "clean_auc": 0.999465145302193,
+          "accuracy_wins": 1,
+          "auc_wins": 0,
+          "checkpoint_epoch": 13,
+          "accuracy_ci_low": 0.8771666666666667,
+          "accuracy_ci_high": 0.9001666666666667,
+          "auc_ci_low": 0.9471269499910857,
+          "auc_ci_high": 0.9623096362988055,
+          "accuracy_rank": 4,
+          "auc_rank": 2
+        },
+        {
+          "method_id": "asr",
+          "method": "ASR",
+          "avg_accuracy_attacks": 0.9016666666666667,
+          "avg_accuracy_all": 0.9103703703703704,
+          "worst_accuracy": 0.7466666666666667,
+          "clean_accuracy": 0.98,
+          "avg_auc_attacks": 0.9543608486361205,
+          "avg_auc_all": 0.9594120560210772,
+          "worst_auc": 0.8414191477981815,
+          "clean_auc": 0.999821715100731,
+          "accuracy_wins": 3,
+          "auc_wins": 2,
+          "checkpoint_epoch": 5,
+          "accuracy_ci_low": 0.8906666666666666,
+          "accuracy_ci_high": 0.9123333333333332,
+          "auc_ci_low": 0.9469140889641647,
+          "auc_ci_high": 0.9613174139775362,
+          "accuracy_rank": 1,
+          "auc_rank": 3
+        },
+        {
+          "method_id": "uniform",
+          "method": "Uniform",
+          "avg_accuracy_attacks": 0.8896666666666667,
+          "avg_accuracy_all": 0.8997037037037037,
+          "worst_accuracy": 0.78,
+          "clean_accuracy": 0.98,
+          "avg_auc_attacks": 0.9533624532002138,
+          "avg_auc_all": 0.9584849745448784,
+          "worst_auc": 0.8718702085933323,
+          "clean_auc": 0.999465145302193,
+          "accuracy_wins": 1,
+          "auc_wins": 0,
+          "checkpoint_epoch": 64,
+          "accuracy_ci_low": 0.8771666666666667,
+          "accuracy_ci_high": 0.9015,
+          "auc_ci_low": 0.9449584596184704,
+          "auc_ci_high": 0.9611962693884828,
+          "accuracy_rank": 3,
+          "auc_rank": 4
+        },
+        {
+          "method_id": "bass",
+          "method": "BASS",
+          "avg_accuracy_attacks": 0.8741666666666666,
+          "avg_accuracy_all": 0.8866666666666666,
+          "worst_accuracy": 0.7533333333333333,
+          "clean_accuracy": 0.9866666666666667,
+          "avg_auc_attacks": 0.9502986272062757,
+          "avg_auc_all": 0.9557813830946296,
+          "worst_auc": 0.8627705473346408,
+          "clean_auc": 0.999643430201462,
+          "accuracy_wins": 2,
+          "auc_wins": 1,
+          "checkpoint_epoch": 87,
+          "accuracy_ci_low": 0.8621666666666666,
+          "accuracy_ci_high": 0.8855,
+          "auc_ci_low": 0.9415528169014085,
+          "auc_ci_high": 0.9582353583526476,
+          "accuracy_rank": 6,
+          "auc_rank": 5
+        },
+        {
+          "method_id": "bandit_ucb",
+          "method": "Bandit UCB",
+          "avg_accuracy_attacks": 0.8825,
+          "avg_accuracy_all": 0.8925925925925926,
+          "worst_accuracy": 0.7653333333333333,
+          "clean_accuracy": 0.9733333333333334,
+          "avg_auc_attacks": 0.9466714209306472,
+          "avg_auc_all": 0.9524977714387592,
+          "worst_auc": 0.865423426635764,
+          "clean_auc": 0.9991085755036548,
+          "accuracy_wins": 0,
+          "auc_wins": 0,
+          "checkpoint_epoch": 87,
+          "accuracy_ci_low": 0.8701666666666666,
+          "accuracy_ci_high": 0.8943333333333334,
+          "auc_ci_low": 0.9381852380103406,
+          "auc_ci_high": 0.9550244250311999,
+          "accuracy_rank": 5,
+          "auc_rank": 6
+        }
+      ],
+      "condition_results": [
+        {
+          "method_id": "uniform",
+          "method": "Uniform",
+          "attack_id": "clean",
+          "condition": "Clean",
+          "auc": 0.999465145302193,
+          "accuracy": 0.98,
+          "best_threshold": 0.9932219982147217,
+          "checkpoint_epoch": 64,
+          "evaluation_protocol": "shared_downstream_attack_eval_v1"
+        },
+        {
+          "method_id": "uniform",
+          "method": "Uniform",
+          "attack_id": "jpeg_strong",
+          "condition": "Strong JPEG",
+          "auc": 0.9826350508111963,
+          "accuracy": 0.932,
+          "best_threshold": 0.6748217344284058,
+          "checkpoint_epoch": 64,
+          "evaluation_protocol": "shared_downstream_attack_eval_v1"
+        },
+        {
+          "method_id": "uniform",
+          "method": "Uniform",
+          "attack_id": "msg_app_combo",
+          "condition": "Messaging-app combo",
+          "auc": 0.9210768407915849,
+          "accuracy": 0.8466666666666667,
+          "best_threshold": 0.4312477707862854,
+          "checkpoint_epoch": 64,
+          "evaluation_protocol": "shared_downstream_attack_eval_v1"
+        },
+        {
+          "method_id": "uniform",
+          "method": "Uniform",
+          "attack_id": "down_up",
+          "condition": "Down/up sampling",
+          "auc": 0.9917988946336245,
+          "accuracy": 0.9466666666666667,
+          "best_threshold": 0.7945407032966614,
+          "checkpoint_epoch": 64,
+          "evaluation_protocol": "shared_downstream_attack_eval_v1"
+        },
+        {
+          "method_id": "uniform",
+          "method": "Uniform",
+          "attack_id": "blur",
+          "condition": "Blur",
+          "auc": 0.9526617935460865,
+          "accuracy": 0.8853333333333333,
+          "best_threshold": 0.5065997242927551,
+          "checkpoint_epoch": 64,
+          "evaluation_protocol": "shared_downstream_attack_eval_v1"
+        },
+        {
+          "method_id": "uniform",
+          "method": "Uniform",
+          "attack_id": "random_crop",
+          "condition": "Random crop",
+          "auc": 0.958566589409877,
+          "accuracy": 0.888,
+          "best_threshold": 0.6781863570213318,
+          "checkpoint_epoch": 64,
+          "evaluation_protocol": "shared_downstream_attack_eval_v1"
+        },
+        {
+          "method_id": "uniform",
+          "method": "Uniform",
+          "attack_id": "occlusion",
+          "condition": "Occlusion",
+          "auc": 0.9986236405776431,
+          "accuracy": 0.9733333333333334,
+          "best_threshold": 0.8933282494544983,
+          "checkpoint_epoch": 64,
+          "evaluation_protocol": "shared_downstream_attack_eval_v1"
+        },
+        {
+          "method_id": "uniform",
+          "method": "Uniform",
+          "attack_id": "geom_warp",
+          "condition": "Geometric warp",
+          "auc": 0.949666607238367,
+          "accuracy": 0.8653333333333333,
+          "best_threshold": 0.6761876344680786,
+          "checkpoint_epoch": 64,
+          "evaluation_protocol": "shared_downstream_attack_eval_v1"
+        },
+        {
+          "method_id": "uniform",
+          "method": "Uniform",
+          "attack_id": "train_aug_mix",
+          "condition": "Training augmentation mix",
+          "auc": 0.8718702085933323,
+          "accuracy": 0.78,
+          "best_threshold": 0.5920989513397217,
+          "checkpoint_epoch": 64,
+          "evaluation_protocol": "shared_downstream_attack_eval_v1"
+        },
+        {
+          "method_id": "bandit_ucb",
+          "method": "Bandit UCB",
+          "attack_id": "clean",
+          "condition": "Clean",
+          "auc": 0.9991085755036548,
+          "accuracy": 0.9733333333333334,
+          "best_threshold": 0.8682935833930969,
+          "checkpoint_epoch": 87,
+          "evaluation_protocol": "shared_downstream_attack_eval_v1"
+        },
+        {
+          "method_id": "bandit_ucb",
+          "method": "Bandit UCB",
+          "attack_id": "jpeg_strong",
+          "condition": "Strong JPEG",
+          "auc": 0.982342663576395,
+          "accuracy": 0.924,
+          "best_threshold": 0.5636101365089417,
+          "checkpoint_epoch": 87,
+          "evaluation_protocol": "shared_downstream_attack_eval_v1"
+        },
+        {
+          "method_id": "bandit_ucb",
+          "method": "Bandit UCB",
+          "attack_id": "msg_app_combo",
+          "condition": "Messaging-app combo",
+          "auc": 0.9033410590123017,
+          "accuracy": 0.8386666666666667,
+          "best_threshold": 0.4788386821746826,
+          "checkpoint_epoch": 87,
+          "evaluation_protocol": "shared_downstream_attack_eval_v1"
+        },
+        {
+          "method_id": "bandit_ucb",
+          "method": "Bandit UCB",
+          "attack_id": "down_up",
+          "condition": "Down/up sampling",
+          "auc": 0.9910857550365484,
+          "accuracy": 0.9266666666666666,
+          "best_threshold": 0.7386360764503479,
+          "checkpoint_epoch": 87,
+          "evaluation_protocol": "shared_downstream_attack_eval_v1"
+        },
+        {
+          "method_id": "bandit_ucb",
+          "method": "Bandit UCB",
+          "attack_id": "blur",
+          "condition": "Blur",
+          "auc": 0.933563915136388,
+          "accuracy": 0.8626666666666667,
+          "best_threshold": 0.6567237973213196,
+          "checkpoint_epoch": 87,
+          "evaluation_protocol": "shared_downstream_attack_eval_v1"
+        },
+        {
+          "method_id": "bandit_ucb",
+          "method": "Bandit UCB",
+          "attack_id": "random_crop",
+          "condition": "Random crop",
+          "auc": 0.9519843109288644,
+          "accuracy": 0.8906666666666667,
+          "best_threshold": 0.582947313785553,
+          "checkpoint_epoch": 87,
+          "evaluation_protocol": "shared_downstream_attack_eval_v1"
+        },
+        {
+          "method_id": "bandit_ucb",
+          "method": "Bandit UCB",
+          "attack_id": "occlusion",
+          "condition": "Occlusion",
+          "auc": 0.9984881440541986,
+          "accuracy": 0.9773333333333334,
+          "best_threshold": 0.7195270657539368,
+          "checkpoint_epoch": 87,
+          "evaluation_protocol": "shared_downstream_attack_eval_v1"
+        },
+        {
+          "method_id": "bandit_ucb",
+          "method": "Bandit UCB",
+          "attack_id": "geom_warp",
+          "condition": "Geometric warp",
+          "auc": 0.9471420930647174,
+          "accuracy": 0.8746666666666667,
+          "best_threshold": 0.6048290729522705,
+          "checkpoint_epoch": 87,
+          "evaluation_protocol": "shared_downstream_attack_eval_v1"
+        },
+        {
+          "method_id": "bandit_ucb",
+          "method": "Bandit UCB",
+          "attack_id": "train_aug_mix",
+          "condition": "Training augmentation mix",
+          "auc": 0.865423426635764,
+          "accuracy": 0.7653333333333333,
+          "best_threshold": 0.40771356225013733,
+          "checkpoint_epoch": 87,
+          "evaluation_protocol": "shared_downstream_attack_eval_v1"
+        },
+        {
+          "method_id": "ats",
+          "method": "ATS",
+          "attack_id": "clean",
+          "condition": "Clean",
+          "auc": 0.999465145302193,
+          "accuracy": 0.98,
+          "best_threshold": 0.9948866963386536,
+          "checkpoint_epoch": 13,
+          "evaluation_protocol": "shared_downstream_attack_eval_v1"
+        },
+        {
+          "method_id": "ats",
+          "method": "ATS",
+          "attack_id": "jpeg_strong",
+          "condition": "Strong JPEG",
+          "auc": 0.9843251916562668,
+          "accuracy": 0.9293333333333333,
+          "best_threshold": 0.55910724401474,
+          "checkpoint_epoch": 13,
+          "evaluation_protocol": "shared_downstream_attack_eval_v1"
+        },
+        {
+          "method_id": "ats",
+          "method": "ATS",
+          "attack_id": "msg_app_combo",
+          "condition": "Messaging-app combo",
+          "auc": 0.9298627206275628,
+          "accuracy": 0.8146666666666667,
+          "best_threshold": 0.26770538091659546,
+          "checkpoint_epoch": 13,
+          "evaluation_protocol": "shared_downstream_attack_eval_v1"
+        },
+        {
+          "method_id": "ats",
+          "method": "ATS",
+          "attack_id": "down_up",
+          "condition": "Down/up sampling",
+          "auc": 0.9934034587270458,
+          "accuracy": 0.9666666666666667,
+          "best_threshold": 0.7159533500671387,
+          "checkpoint_epoch": 13,
+          "evaluation_protocol": "shared_downstream_attack_eval_v1"
+        },
+        {
+          "method_id": "ats",
+          "method": "ATS",
+          "attack_id": "blur",
+          "condition": "Blur",
+          "auc": 0.9628240328044214,
+          "accuracy": 0.8813333333333333,
+          "best_threshold": 0.304894357919693,
+          "checkpoint_epoch": 13,
+          "evaluation_protocol": "shared_downstream_attack_eval_v1"
+        },
+        {
+          "method_id": "ats",
+          "method": "ATS",
+          "attack_id": "random_crop",
+          "condition": "Random crop",
+          "auc": 0.9618327687644855,
+          "accuracy": 0.8893333333333333,
+          "best_threshold": 0.6221730709075928,
+          "checkpoint_epoch": 13,
+          "evaluation_protocol": "shared_downstream_attack_eval_v1"
+        },
+        {
+          "method_id": "ats",
+          "method": "ATS",
+          "attack_id": "occlusion",
+          "condition": "Occlusion",
+          "auc": 0.9989944731681226,
+          "accuracy": 0.9773333333333334,
+          "best_threshold": 0.8325440287590027,
+          "checkpoint_epoch": 13,
+          "evaluation_protocol": "shared_downstream_attack_eval_v1"
+        },
+        {
+          "method_id": "ats",
+          "method": "ATS",
+          "attack_id": "geom_warp",
+          "condition": "Geometric warp",
+          "auc": 0.9453556783740418,
+          "accuracy": 0.884,
+          "best_threshold": 0.519171416759491,
+          "checkpoint_epoch": 13,
+          "evaluation_protocol": "shared_downstream_attack_eval_v1"
+        },
+        {
+          "method_id": "ats",
+          "method": "ATS",
+          "attack_id": "train_aug_mix",
+          "condition": "Training augmentation mix",
+          "auc": 0.8632412194687109,
+          "accuracy": 0.7693333333333333,
+          "best_threshold": 0.29388493299484253,
+          "checkpoint_epoch": 13,
+          "evaluation_protocol": "shared_downstream_attack_eval_v1"
+        },
+        {
+          "method_id": "bass",
+          "method": "BASS",
+          "attack_id": "clean",
+          "condition": "Clean",
+          "auc": 0.999643430201462,
+          "accuracy": 0.9866666666666667,
+          "best_threshold": 0.7133383750915527,
+          "checkpoint_epoch": 87,
+          "evaluation_protocol": "shared_downstream_attack_eval_v1"
+        },
+        {
+          "method_id": "bass",
+          "method": "BASS",
+          "attack_id": "jpeg_strong",
+          "condition": "Strong JPEG",
+          "auc": 0.979475842396149,
+          "accuracy": 0.9173333333333333,
+          "best_threshold": 0.514096736907959,
+          "checkpoint_epoch": 87,
+          "evaluation_protocol": "shared_downstream_attack_eval_v1"
+        },
+        {
+          "method_id": "bass",
+          "method": "BASS",
+          "attack_id": "msg_app_combo",
+          "condition": "Messaging-app combo",
+          "auc": 0.9219326083080762,
+          "accuracy": 0.768,
+          "best_threshold": 0.21893508732318878,
+          "checkpoint_epoch": 87,
+          "evaluation_protocol": "shared_downstream_attack_eval_v1"
+        },
+        {
+          "method_id": "bass",
+          "method": "BASS",
+          "attack_id": "down_up",
+          "condition": "Down/up sampling",
+          "auc": 0.9912640399358175,
+          "accuracy": 0.9533333333333334,
+          "best_threshold": 0.621938943862915,
+          "checkpoint_epoch": 87,
+          "evaluation_protocol": "shared_downstream_attack_eval_v1"
+        },
+        {
+          "method_id": "bass",
+          "method": "BASS",
+          "attack_id": "blur",
+          "condition": "Blur",
+          "auc": 0.9365804956320201,
+          "accuracy": 0.8546666666666667,
+          "best_threshold": 0.32399094104766846,
+          "checkpoint_epoch": 87,
+          "evaluation_protocol": "shared_downstream_attack_eval_v1"
+        },
+        {
+          "method_id": "bass",
+          "method": "BASS",
+          "attack_id": "random_crop",
+          "condition": "Random crop",
+          "auc": 0.9622820467106437,
+          "accuracy": 0.8973333333333333,
+          "best_threshold": 0.4010050892829895,
+          "checkpoint_epoch": 87,
+          "evaluation_protocol": "shared_downstream_attack_eval_v1"
+        },
+        {
+          "method_id": "bass",
+          "method": "BASS",
+          "attack_id": "occlusion",
+          "condition": "Occlusion",
+          "auc": 0.9987591371010875,
+          "accuracy": 0.9813333333333333,
+          "best_threshold": 0.6186723709106445,
+          "checkpoint_epoch": 87,
+          "evaluation_protocol": "shared_downstream_attack_eval_v1"
+        },
+        {
+          "method_id": "bass",
+          "method": "BASS",
+          "attack_id": "geom_warp",
+          "condition": "Geometric warp",
+          "auc": 0.9493243002317704,
+          "accuracy": 0.868,
+          "best_threshold": 0.5784234404563904,
+          "checkpoint_epoch": 87,
+          "evaluation_protocol": "shared_downstream_attack_eval_v1"
+        },
+        {
+          "method_id": "bass",
+          "method": "BASS",
+          "attack_id": "train_aug_mix",
+          "condition": "Training augmentation mix",
+          "auc": 0.8627705473346408,
+          "accuracy": 0.7533333333333333,
+          "best_threshold": 0.2682088315486908,
+          "checkpoint_epoch": 87,
+          "evaluation_protocol": "shared_downstream_attack_eval_v1"
+        },
+        {
+          "method_id": "asr",
+          "method": "ASR",
+          "attack_id": "clean",
+          "condition": "Clean",
+          "auc": 0.999821715100731,
+          "accuracy": 0.98,
+          "best_threshold": 0.9959599375724792,
+          "checkpoint_epoch": 5,
+          "evaluation_protocol": "shared_downstream_attack_eval_v1"
+        },
+        {
+          "method_id": "asr",
+          "method": "ASR",
+          "attack_id": "jpeg_strong",
+          "condition": "Strong JPEG",
+          "auc": 0.9854448208236763,
+          "accuracy": 0.944,
+          "best_threshold": 0.505402684211731,
+          "checkpoint_epoch": 5,
+          "evaluation_protocol": "shared_downstream_attack_eval_v1"
+        },
+        {
+          "method_id": "asr",
+          "method": "ASR",
+          "attack_id": "msg_app_combo",
+          "condition": "Messaging-app combo",
+          "auc": 0.9452451417364949,
+          "accuracy": 0.8813333333333333,
+          "best_threshold": 0.34938502311706543,
+          "checkpoint_epoch": 5,
+          "evaluation_protocol": "shared_downstream_attack_eval_v1"
+        },
+        {
+          "method_id": "asr",
+          "method": "ASR",
+          "attack_id": "down_up",
+          "condition": "Down/up sampling",
+          "auc": 0.9941165983241219,
+          "accuracy": 0.9733333333333334,
+          "best_threshold": 0.8596226572990417,
+          "checkpoint_epoch": 5,
+          "evaluation_protocol": "shared_downstream_attack_eval_v1"
+        },
+        {
+          "method_id": "asr",
+          "method": "ASR",
+          "attack_id": "blur",
+          "condition": "Blur",
+          "auc": 0.9789124621144589,
+          "accuracy": 0.9266666666666666,
+          "best_threshold": 0.5104537010192871,
+          "checkpoint_epoch": 5,
+          "evaluation_protocol": "shared_downstream_attack_eval_v1"
+        },
+        {
+          "method_id": "asr",
+          "method": "ASR",
+          "attack_id": "random_crop",
+          "condition": "Random crop",
+          "auc": 0.9551506507398824,
+          "accuracy": 0.8933333333333333,
+          "best_threshold": 0.5942416787147522,
+          "checkpoint_epoch": 5,
+          "evaluation_protocol": "shared_downstream_attack_eval_v1"
+        },
+        {
+          "method_id": "asr",
+          "method": "ASR",
+          "attack_id": "occlusion",
+          "condition": "Occlusion",
+          "auc": 0.9994508825102514,
+          "accuracy": 0.9853333333333333,
+          "best_threshold": 0.8821424245834351,
+          "checkpoint_epoch": 5,
+          "evaluation_protocol": "shared_downstream_attack_eval_v1"
+        },
+        {
+          "method_id": "asr",
+          "method": "ASR",
+          "attack_id": "geom_warp",
+          "condition": "Geometric warp",
+          "auc": 0.935147085041897,
+          "accuracy": 0.8626666666666667,
+          "best_threshold": 0.4266425669193268,
+          "checkpoint_epoch": 5,
+          "evaluation_protocol": "shared_downstream_attack_eval_v1"
+        },
+        {
+          "method_id": "asr",
+          "method": "ASR",
+          "attack_id": "train_aug_mix",
+          "condition": "Training augmentation mix",
+          "auc": 0.8414191477981815,
+          "accuracy": 0.7466666666666667,
+          "best_threshold": 0.23393738269805908,
+          "checkpoint_epoch": 5,
+          "evaluation_protocol": "shared_downstream_attack_eval_v1"
+        },
+        {
+          "method_id": "metaspidermark_original",
+          "method": "MetaSpiderMark (original)",
+          "attack_id": "clean",
+          "condition": "Clean",
+          "auc": 0.999465145302193,
+          "accuracy": 0.9866666666666667,
+          "best_threshold": 0.9871004819869995,
+          "checkpoint_epoch": 49,
+          "evaluation_protocol": "shared_downstream_attack_eval_v1"
+        },
+        {
+          "method_id": "metaspidermark_original",
+          "method": "MetaSpiderMark (original)",
+          "attack_id": "jpeg_strong",
+          "condition": "Strong JPEG",
+          "auc": 0.9874059547156356,
+          "accuracy": 0.948,
+          "best_threshold": 0.3314186930656433,
+          "checkpoint_epoch": 49,
+          "evaluation_protocol": "shared_downstream_attack_eval_v1"
+        },
+        {
+          "method_id": "metaspidermark_original",
+          "method": "MetaSpiderMark (original)",
+          "attack_id": "msg_app_combo",
+          "condition": "Messaging-app combo",
+          "auc": 0.95719022998752,
+          "accuracy": 0.8493333333333334,
+          "best_threshold": 0.18006065487861633,
+          "checkpoint_epoch": 49,
+          "evaluation_protocol": "shared_downstream_attack_eval_v1"
+        },
+        {
+          "method_id": "metaspidermark_original",
+          "method": "MetaSpiderMark (original)",
+          "attack_id": "down_up",
+          "condition": "Down/up sampling",
+          "auc": 0.9960777322160813,
+          "accuracy": 0.9866666666666667,
+          "best_threshold": 0.5705500245094299,
+          "checkpoint_epoch": 49,
+          "evaluation_protocol": "shared_downstream_attack_eval_v1"
+        },
+        {
+          "method_id": "metaspidermark_original",
+          "method": "MetaSpiderMark (original)",
+          "attack_id": "blur",
+          "condition": "Blur",
+          "auc": 0.9795756819397398,
+          "accuracy": 0.9253333333333333,
+          "best_threshold": 0.40866926312446594,
+          "checkpoint_epoch": 49,
+          "evaluation_protocol": "shared_downstream_attack_eval_v1"
+        },
+        {
+          "method_id": "metaspidermark_original",
+          "method": "MetaSpiderMark (original)",
+          "attack_id": "random_crop",
+          "condition": "Random crop",
+          "auc": 0.9598645034765555,
+          "accuracy": 0.8946666666666667,
+          "best_threshold": 0.30989959836006165,
+          "checkpoint_epoch": 49,
+          "evaluation_protocol": "shared_downstream_attack_eval_v1"
+        },
+        {
+          "method_id": "metaspidermark_original",
+          "method": "MetaSpiderMark (original)",
+          "attack_id": "occlusion",
+          "condition": "Occlusion",
+          "auc": 0.9990372615439472,
+          "accuracy": 0.98,
+          "best_threshold": 0.2571937143802643,
+          "checkpoint_epoch": 49,
+          "evaluation_protocol": "shared_downstream_attack_eval_v1"
+        },
+        {
+          "method_id": "metaspidermark_original",
+          "method": "MetaSpiderMark (original)",
+          "attack_id": "geom_warp",
+          "condition": "Geometric warp",
+          "auc": 0.9533250133713674,
+          "accuracy": 0.876,
+          "best_threshold": 0.37666231393814087,
+          "checkpoint_epoch": 49,
+          "evaluation_protocol": "shared_downstream_attack_eval_v1"
+        },
+        {
+          "method_id": "metaspidermark_original",
+          "method": "MetaSpiderMark (original)",
+          "attack_id": "train_aug_mix",
+          "condition": "Training augmentation mix",
+          "auc": 0.8782242824032804,
+          "accuracy": 0.7533333333333333,
+          "best_threshold": 0.22705887258052826,
+          "checkpoint_epoch": 49,
+          "evaluation_protocol": "shared_downstream_attack_eval_v1"
+        }
+      ],
+      "paired_comparison": [
+        {
+          "metric": "Accuracy (primary)",
+          "candidate": "MetaSpiderMark (original)",
+          "comparator": "ASR",
+          "candidate_value": 0.9016666666666666,
+          "comparator_value": 0.9016666666666667,
+          "difference_pp": 0.0,
+          "ci_low_pp": -0.7166666666666766,
+          "ci_high_pp": 0.7000000000000117,
+          "conclusion": "No distinguishable difference"
+        },
+        {
+          "metric": "AUROC (secondary)",
+          "candidate": "MetaSpiderMark (original)",
+          "comparator": "ATS",
+          "candidate_value": 0.9638375824567659,
+          "comparator_value": 0.9549799429488322,
+          "difference_pp": 0.8857639507933723,
+          "ci_low_pp": 0.5479530665002655,
+          "ci_high_pp": 1.2376147709038978,
+          "conclusion": "MetaSpiderMark leads on this fixed-checkpoint evaluation"
+        }
+      ]
+    }
+  },
+  "sources": [
+    {
+      "id": "controlled_six_results",
+      "label": "Controlled six-method paired evaluation summary",
+      "path": "eval_results/stage2_controlled_six_paired/combined_attack_eval_summary.csv",
+      "query": {
+        "engine": "sqlite",
+        "sql": "SELECT checkpoint_label, attack, CAST(our_auc AS REAL) AS our_auc, CAST(our_acc AS REAL) AS our_acc, CAST(best_our_thr AS REAL) AS best_our_thr, CAST(checkpoint_epoch AS INTEGER) AS checkpoint_epoch, evaluation_protocol FROM controlled_six_results",
+        "description": "Loads the completed 54-row summary after importing the CSV into SQLite.",
+        "executed_at": "2026-08-14T14:42:19Z",
+        "language": "sql",
+        "filters": [
+          "All six methods",
+          "All nine conditions",
+          "Fixed learned-model threshold of 0.5"
+        ],
+        "metric_definitions": [
+          "Attack mean accuracy: equal-weight arithmetic mean of fixed-0.5-threshold accuracy across eight non-clean attacks.",
+          "Attack mean AUROC: equal-weight arithmetic mean of AUROC across eight non-clean attacks.",
+          "Worst-case accuracy and AUROC: minimum value across all nine evaluation conditions."
+        ],
+        "tables_used": [
+          "controlled_six_results"
+        ]
+      }
+    },
+    {
+      "id": "paired_bootstrap_results",
+      "label": "Paired bootstrap confidence-interval analysis",
+      "path": "generate_meeting_report.py",
+      "query": {
+        "engine": "sqlite",
+        "sql": "SELECT method_id, method, accuracy_rank, auc_rank, avg_accuracy_attacks, accuracy_ci_low, accuracy_ci_high, worst_accuracy, avg_auc_attacks, auc_ci_low, auc_ci_high, worst_auc FROM paired_bootstrap_results",
+        "description": "Reads method-level point estimates and paired bootstrap confidence intervals computed from the 54 per-example eval_results.pt files.",
+        "executed_at": "2026-08-14T14:42:19Z",
+        "language": "sql",
+        "filters": [
+          "Prediction files under eval_results/stage2_controlled_six_paired",
+          "750 aligned examples: 395 positive and 355 negative",
+          "Eight non-clean attacks receive equal weight",
+          "Accuracy: 10,000 stratified paired bootstrap resamples",
+          "AUROC: 3,000 stratified paired bootstrap resamples",
+          "Bootstrap seed: 19980802"
+        ],
+        "metric_definitions": [
+          "Accuracy uses the fixed 0.5 learned-model threshold in the evaluation code.",
+          "Each bootstrap resample preserves class counts and uses identical sampled example indices across methods and attacks.",
+          "Intervals are percentile 95% confidence intervals over the fixed trained checkpoints and evaluation sample; they do not include training-seed variability."
+        ],
+        "tables_used": [
+          "paired_bootstrap_results"
+        ]
+      }
+    }
+  ],
+  "package_info": {
+    "originUrl": "artifact://accuracy-first-watermark-comparison",
+    "sourceSnapshotModifiedAt": "2026-08-14T11:15:37.489952Z"
+  }
+}

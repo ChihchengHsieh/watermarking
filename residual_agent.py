@@ -43,6 +43,8 @@ class LLMTaskControllerConfig(ResidualTaskControllerConfig):
     api_url: str = "https://api.openai.com/v1/responses"
     api_format: str = "responses"
     timeout_sec: float = 20.0
+    max_tokens: int = 512
+    reasoning_effort: Optional[str] = None
     call_interval: int = 100
     recent_window: int = 20
     max_context_tasks: int = 12
@@ -572,14 +574,17 @@ class LLMResidualTaskController(ResidualTaskController):
 
         api_format = self.config.api_format.lower()
         if api_format == "chat_completions":
-            return {
+            payload = {
                 "model": self.config.model,
                 "messages": messages,
                 "temperature": 0.2,
                 "top_p": 0.7,
-                "max_tokens": 512,
+                "max_tokens": int(self.config.max_tokens),
                 "stream": False,
             }
+            if self.config.reasoning_effort:
+                payload["reasoning_effort"] = self.config.reasoning_effort
+            return payload
         if api_format != "responses":
             raise ValueError(f"Unsupported LLM API format: {self.config.api_format}")
 

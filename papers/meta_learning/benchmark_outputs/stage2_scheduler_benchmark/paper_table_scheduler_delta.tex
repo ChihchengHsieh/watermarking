@@ -1,13 +1,48 @@
-\begin{table}[t]
+\begin{table*}[t]
 \centering
 \small
-\begin{tabular}{lc}
+\begin{tabular}{llrrrr}
 \toprule
-Status & Value \\
+Scheduler & Attack & Acc. & $\Delta$ Acc. & AUROC & $\Delta$ AUROC \\
 \midrule
-Benchmark results & Pending \\
+ats & blur & 0.4403 & 0.0000 & 0.9010 & -0.0000 \\
+ats & clean & 0.4403 & -0.0299 & 1.0000 & 0.0000 \\
+ats & down\_up & 0.4403 & 0.0000 & 0.9875 & 0.0007 \\
+ats & geom\_warp & 0.4403 & 0.0000 & 0.9517 & -0.0022 \\
+ats & jpeg\_strong & 0.4403 & 0.0000 & 0.9742 & -0.0018 \\
+ats & msg\_app\_combo & 0.4403 & 0.0000 & 0.8878 & -0.0006 \\
+ats & occlusion & 0.4403 & -0.0045 & 1.0000 & 0.0000 \\
+ats & random\_crop & 0.4403 & 0.0000 & 0.9747 & -0.0004 \\
+ats & train\_aug\_mix & 0.4403 & 0.0000 & 0.8658 & 0.0000 \\
+bass & blur & 0.4403 & 0.0000 & 0.8985 & -0.0025 \\
+bass & clean & 0.4403 & -0.0299 & 1.0000 & 0.0000 \\
+bass & down\_up & 0.4403 & 0.0000 & 0.9879 & 0.0011 \\
+bass & geom\_warp & 0.4403 & 0.0000 & 0.9580 & 0.0041 \\
+bass & jpeg\_strong & 0.4403 & 0.0000 & 0.9726 & -0.0034 \\
+bass & msg\_app\_combo & 0.4403 & 0.0000 & 0.8882 & -0.0002 \\
+bass & occlusion & 0.4403 & -0.0045 & 1.0000 & 0.0000 \\
+bass & random\_crop & 0.4403 & 0.0000 & 0.9733 & -0.0018 \\
+bass & train\_aug\_mix & 0.4403 & 0.0000 & 0.8666 & 0.0008 \\
+bandit\_ucb & blur & 0.4403 & 0.0000 & 0.9055 & 0.0044 \\
+bandit\_ucb & clean & 0.4463 & -0.0239 & 1.0000 & 0.0000 \\
+bandit\_ucb & down\_up & 0.4403 & 0.0000 & 0.9880 & 0.0012 \\
+bandit\_ucb & geom\_warp & 0.4403 & 0.0000 & 0.9538 & -0.0002 \\
+bandit\_ucb & jpeg\_strong & 0.4403 & 0.0000 & 0.9772 & 0.0012 \\
+bandit\_ucb & msg\_app\_combo & 0.4403 & 0.0000 & 0.8900 & 0.0016 \\
+bandit\_ucb & occlusion & 0.4403 & -0.0045 & 1.0000 & 0.0000 \\
+bandit\_ucb & random\_crop & 0.4403 & 0.0000 & 0.9744 & -0.0007 \\
+bandit\_ucb & train\_aug\_mix & 0.4403 & 0.0000 & 0.8658 & 0.0001 \\
+asr & blur & 0.4403 & 0.0000 & 0.9043 & 0.0033 \\
+asr & clean & 0.4403 & -0.0299 & 1.0000 & 0.0000 \\
+asr & down\_up & 0.4403 & 0.0000 & 0.9884 & 0.0016 \\
+asr & geom\_warp & 0.4403 & 0.0000 & 0.9559 & 0.0020 \\
+asr & jpeg\_strong & 0.4403 & 0.0000 & 0.9748 & -0.0011 \\
+asr & msg\_app\_combo & 0.4403 & 0.0000 & 0.8883 & -0.0001 \\
+asr & occlusion & 0.4403 & -0.0045 & 1.0000 & 0.0000 \\
+asr & random\_crop & 0.4403 & 0.0000 & 0.9744 & -0.0008 \\
+asr & train\_aug\_mix & 0.4403 & 0.0000 & 0.8658 & 0.0001 \\
 \bottomrule
 \end{tabular}
-\caption{Per-attack scheduler deltas versus uniform. Results are pending because no evaluated scheduler CSVs are available yet.}
+\caption{Per-attack scheduler deltas versus the uniform seed-0 anchor.}
 \label{tab:stage2_scheduler_delta}
-\end{table}
+\end{table*}

@@ -1,8 +1,10 @@
 \section{Conclusion}
 \label{sec:conclusion}
 
-This paper draft introduces Agentic MetaSpiderMark, an agentic task scheduler for meta-learning-based diffusion watermark verification.
-The approach keeps the original SpiderMark watermark injection mechanism unchanged while using online verifier feedback to adaptively schedule downstream attack episodes.
-Preliminary results show consistent gains over a non-meta verifier across nine transformations, suggesting that verifier robustness depends not only on architecture and watermark geometry, but also on closed-loop task exposure during training.
-The next step is a controlled scheduler benchmark that evaluates the agentic AI scheduler against uniform sampling, UCB bandits, ATS-style adaptive scheduling, BASS-style contextual bandits, and Adaptive Sampler-style task sampling under matched attacks, checkpoint rules, and compute budgets.
-After the scheduler comparison is stable, a fixed-scheduler SOTA/canonical meta-learning comparison should evaluate FOMAML, MAML, ANIL, Reptile, Matching Networks, Prototypical Networks, and an R2D2-style ridge solver.
+This paper introduces Agentic MetaSpiderMark, an agentic task scheduler for meta-learning-based diffusion watermark verification.
+The approach keeps the SpiderMark watermark injection mechanism unchanged while using online verifier feedback to adaptively schedule downstream attack episodes.
+Under matched 2,000-step meta-training, shared downstream batches, and accuracy-selected checkpoints, Agentic MetaSpiderMark achieves the highest mean fixed-threshold accuracy on the unseen 1,000-image COCO test set: 89.15\% across eight attacks.
+No competing scheduler achieves a higher mean accuracy, and paired analysis confirms positive gains over uniform sampling, Adaptive Sampler, and Bandit-UCB.
+The smaller differences from BASS and ATS remain unresolved, while Uniform retains a slight AUROC advantage.
+For the operational objective of binary watermark verification, these results establish Agentic MetaSpiderMark as the best accuracy-first scheduler in the controlled benchmark, while deliberately avoiding a claim of universal dominance across attacks or metrics.
+Future work should replicate the controlled comparison across training seeds and evaluate canonical meta-learning updates, scheduler overhead, and additional held-out distributions.

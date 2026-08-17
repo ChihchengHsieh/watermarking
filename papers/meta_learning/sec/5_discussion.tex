@@ -1,7 +1,11 @@
 \section{Discussion}
 \label{sec:discussion}
 
-The current evidence supports a focused interpretation: downstream robustness depends strongly on how attack episodes are scheduled during verifier meta-training.
+For the deployment objective evaluated here, the controlled COCO benchmark identifies Agentic MetaSpiderMark as the best-performing accuracy-first scheduler among the six matched methods.
+It has the highest mean accuracy across the eight attacked conditions, and paired analysis confirms positive advantages over uniform sampling, Adaptive Sampler, and Bandit-UCB.
+The strongest adaptive alternatives remain close: its margins over BASS and ATS are not statistically resolved.
+Uniform's slightly higher AUROC further shows that the preferred scheduler depends on whether the deployment objective is fixed-threshold accuracy or threshold-free ranking.
+Because operational watermark verification requires a binary decision, the fixed-threshold result is the more direct measure of deployment performance in our target setting.
 This does not mean that the watermark pattern alone changed.
 The central comparison should be against non-agentic task schedulers that could plausibly explain the same gains without agentic control.
 
@@ -9,7 +13,7 @@ This distinction matters for the final paper narrative.
 If Agentic MetaSpiderMark is presented as a new meta-learning algorithm, reviewers will expect comparisons with MAML variants, Reptile-style updates, or broader few-shot learning baselines.
 Our claim is different: the meta-learning update provides the episodic training substrate, while the paper's novelty is an agentic AI scheduler that controls attack-task exposure from online training feedback.
 The benchmark should therefore prioritize SpiderMark anchor baselines and a matched scheduler table, while treating the SOTA/canonical meta-learning table as context for the verifier update.
-In practice, this means first completing the fixed-budget scheduler rows for uniform, UCB, ATS-style, BASS-style, Adaptive Sampler-style, and the agentic scheduler, then adding MAML, ANIL, Reptile, Matching Networks, Prototypical Networks, and an R2D2-style ridge solver under a fixed scheduler.
+The fixed-budget scheduler rows for uniform, UCB, ATS-style, BASS-style, Adaptive Sampler-style, and the agentic scheduler are now complete for one controlled seed; the next context experiment should add MAML, ANIL, Reptile, Matching Networks, Prototypical Networks, and an R2D2-style ridge solver under a fixed scheduler.
 
 There are also practical limitations.
 Meta-training adds computational cost because each episode requires support and query passes, and checkpoint selection can materially affect downstream robustness.
@@ -17,4 +21,5 @@ The agentic scheduler introduces additional degrees of freedom through the promp
 For the main paper, ATS-style adaptive task scheduling, BASS-style contextual bandit scheduling, and Adaptive Sampler-style task sampling are the most important SOTA-inspired scheduler baselines because they directly target task selection during meta-learning.
 The paper should avoid overclaiming exact reproduction unless the original ATS or BASS code is ported into this benchmark.
 The agentic scheduler should be framed as a bounded closed-loop controller rather than an unconstrained language-model decision maker: all proposed task weights are clipped by the active residual budget, normalized, and logged by local code.
-Finally, all preliminary results in this draft should be considered provisional until repeated across seeds and evaluated on the full benchmark suite.
+Finally, the COCO confidence intervals quantify test-image uncertainty only.
+The scheduler ranking is conditional on one meta-training and downstream-training seed, so the small differences among MetaSpiderMark, BASS, and ATS should remain provisional until training-seed replication is available.

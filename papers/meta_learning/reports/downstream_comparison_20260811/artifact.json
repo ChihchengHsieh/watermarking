@@ -1,0 +1,1058 @@
+{
+  "surface": "report",
+  "manifest": {
+    "version": 1,
+    "surface": "report",
+    "title": "Downstream Robustness: MetaSpiderMark vs Scheduler Baselines",
+    "description": "Technical comparison of nine-attack downstream robustness results.",
+    "generatedAt": "2026-08-11T18:35:49+10:00",
+    "cards": [
+      {
+        "id": "uniform_auc",
+        "description": "Uniform has the highest mean AUROC in the current directional comparison.",
+        "dataset": "summary",
+        "sourceId": "comparison_analysis",
+        "metrics": [
+          {
+            "label": "Uniform mean AUROC",
+            "field": "uniform_mean_auroc",
+            "format": "number"
+          },
+          {
+            "label": "vs Meta 116",
+            "field": "uniform_mean_auroc_delta",
+            "format": "number",
+            "signed": true
+          }
+        ]
+      },
+      {
+        "id": "uniform_accuracy",
+        "description": "Uniform also leads MetaSpiderMark 116 on average fixed-threshold accuracy.",
+        "dataset": "summary",
+        "sourceId": "comparison_analysis",
+        "metrics": [
+          {
+            "label": "Uniform mean accuracy",
+            "field": "uniform_mean_accuracy",
+            "format": "percent"
+          },
+          {
+            "label": "vs Meta 116",
+            "field": "uniform_mean_accuracy_delta",
+            "format": "percent",
+            "signed": true
+          }
+        ]
+      },
+      {
+        "id": "meta_floor",
+        "description": "MetaSpiderMark 116 preserves the strongest minimum AUROC across attacks.",
+        "dataset": "summary",
+        "sourceId": "comparison_analysis",
+        "metrics": [
+          {
+            "label": "Meta 116 worst AUROC",
+            "field": "meta116_worst_auroc",
+            "format": "number"
+          },
+          {
+            "label": "advantage vs Uniform",
+            "field": "meta_floor_advantage",
+            "format": "number",
+            "signed": true
+          }
+        ]
+      }
+    ],
+    "charts": [
+      {
+        "id": "auroc_profile",
+        "title": "Mean and worst-attack AUROC by checkpoint",
+        "subtitle": "Nine attacks; higher is better. Mean captures overall performance, while the minimum captures the robustness floor.",
+        "type": "bar",
+        "dataset": "auroc_profile",
+        "sourceId": "comparison_analysis",
+        "encodings": {
+          "x": {
+            "field": "model",
+            "type": "nominal",
+            "label": "Checkpoint"
+          },
+          "y": {
+            "field": "auroc",
+            "type": "quantitative",
+            "label": "AUROC",
+            "format": "number"
+          },
+          "color": {
+            "field": "scope",
+            "type": "nominal",
+            "label": "Metric"
+          }
+        },
+        "valueFormat": "number",
+        "palette": {
+          "kind": "categorical",
+          "name": "blue-orange"
+        },
+        "settings": {
+          "groupMode": "grouped",
+          "showValues": true,
+          "categoryLabelPolicy": "wrap"
+        },
+        "labels": {
+          "values": "all"
+        },
+        "legend": {
+          "position": "bottom",
+          "sort": "spec",
+          "title": "Metric"
+        },
+        "layout": "full"
+      },
+      {
+        "id": "mean_auc_delta",
+        "title": "Mean AUROC difference versus MetaSpiderMark 116",
+        "subtitle": "Candidate minus MetaSpiderMark 116 across nine attacks; positive values favor the candidate.",
+        "type": "horizontalBar",
+        "dataset": "aggregate_delta",
+        "sourceId": "comparison_analysis",
+        "encodings": {
+          "x": {
+            "field": "model",
+            "type": "nominal",
+            "label": "Checkpoint"
+          },
+          "y": {
+            "field": "delta_mean_auroc_vs_meta116",
+            "type": "quantitative",
+            "label": "AUROC difference",
+            "format": "number"
+          }
+        },
+        "valueFormat": "number",
+        "palette": {
+          "kind": "diverging",
+          "name": "blue-orange",
+          "midpoint": 0
+        },
+        "referenceLines": [
+          {
+            "axis": "y",
+            "value": 0,
+            "label": "MetaSpiderMark 116",
+            "color": "neutral",
+            "lineStyle": "dashed"
+          }
+        ],
+        "settings": {
+          "orientation": "horizontal",
+          "showValues": true,
+          "sort": "descending",
+          "categoryLabelPolicy": "wrap"
+        },
+        "labels": {
+          "values": "all"
+        },
+        "layout": "full"
+      },
+      {
+        "id": "uniform_attack_delta",
+        "title": "Uniform AUROC difference by attack",
+        "subtitle": "Uniform minus historical MetaSpiderMark 116; each side contains 750 predictions per attack, but tensors were generated in separate runs.",
+        "type": "horizontalBar",
+        "dataset": "attack_delta",
+        "sourceId": "comparison_analysis",
+        "encodings": {
+          "x": {
+            "field": "attack",
+            "type": "nominal",
+            "label": "Attack"
+          },
+          "y": {
+            "field": "delta_auroc",
+            "type": "quantitative",
+            "label": "AUROC difference",
+            "format": "number"
+          }
+        },
+        "valueFormat": "number",
+        "palette": {
+          "kind": "diverging",
+          "name": "blue-orange",
+          "midpoint": 0
+        },
+        "referenceLines": [
+          {
+            "axis": "y",
+            "value": 0,
+            "label": "Equal AUROC",
+            "color": "neutral",
+            "lineStyle": "dashed"
+          }
+        ],
+        "settings": {
+          "orientation": "horizontal",
+          "showValues": true,
+          "sort": "descending",
+          "categoryLabelPolicy": "wrap"
+        },
+        "labels": {
+          "values": "all"
+        },
+        "layout": "full"
+      }
+    ],
+    "tables": [
+      {
+        "id": "aggregate_table",
+        "title": "Aggregate checkpoint comparison",
+        "subtitle": "Unweighted results across the same nine attack categories.",
+        "dataset": "aggregate",
+        "sourceId": "comparison_analysis",
+        "defaultSort": {
+          "field": "mean_auroc",
+          "direction": "desc"
+        },
+        "density": "spacious",
+        "layout": "full",
+        "columns": [
+          {
+            "field": "model",
+            "label": "Model",
+            "type": "text"
+          },
+          {
+            "field": "checkpoint_epoch",
+            "label": "Epoch",
+            "format": "number"
+          },
+          {
+            "field": "mean_accuracy",
+            "label": "Mean accuracy",
+            "format": "percent"
+          },
+          {
+            "field": "mean_auroc",
+            "label": "Mean AUROC",
+            "format": "number"
+          },
+          {
+            "field": "worst_accuracy",
+            "label": "Worst accuracy",
+            "format": "percent"
+          },
+          {
+            "field": "worst_auroc",
+            "label": "Worst AUROC",
+            "format": "number"
+          },
+          {
+            "field": "delta_mean_auroc_vs_meta116",
+            "label": "AUROC delta vs Meta 116",
+            "format": "number",
+            "movement": true
+          }
+        ]
+      },
+      {
+        "id": "attack_table",
+        "title": "Uniform and MetaSpiderMark 116 by attack",
+        "subtitle": "Accuracy and AUROC from nine common attacks; deltas are Uniform minus MetaSpiderMark 116.",
+        "dataset": "attack_delta",
+        "sourceId": "comparison_analysis",
+        "defaultSort": {
+          "field": "delta_auroc",
+          "direction": "desc"
+        },
+        "density": "dense",
+        "layout": "full",
+        "columns": [
+          {
+            "field": "attack",
+            "label": "Attack",
+            "type": "text"
+          },
+          {
+            "field": "uniform_accuracy",
+            "label": "Uniform accuracy",
+            "format": "percent"
+          },
+          {
+            "field": "meta116_accuracy",
+            "label": "Meta 116 accuracy",
+            "format": "percent"
+          },
+          {
+            "field": "delta_accuracy",
+            "label": "Accuracy delta",
+            "format": "percent",
+            "movement": true
+          },
+          {
+            "field": "uniform_auroc",
+            "label": "Uniform AUROC",
+            "format": "number"
+          },
+          {
+            "field": "meta116_auroc",
+            "label": "Meta 116 AUROC",
+            "format": "number"
+          },
+          {
+            "field": "delta_auroc",
+            "label": "AUROC delta",
+            "format": "number",
+            "movement": true
+          }
+        ]
+      }
+    ],
+    "sources": [
+      {
+        "id": "comparison_analysis",
+        "label": "Reproducible Stage 2 comparison analysis",
+        "path": "scripts/build_stage2_comparison_report.py",
+        "query": {
+          "engine": "duckdb",
+          "language": "sql",
+          "description": "Combines the reviewed baseline and MetaSpiderMark attack summaries and computes unweighted attack-level aggregates and deltas.",
+          "sql": "WITH combined AS (\n  SELECT checkpoint_label, attack, our_acc, our_auc FROM read_csv_auto('eval_results/stage2_downstream_shared120_best_auc/combined_attack_eval_summary.csv')\n  UNION ALL\n  SELECT checkpoint_label, attack, our_acc, our_auc FROM read_csv_auto('eval_results/downstream_meta_checkpoint_sweep/combined_attack_eval_summary.csv')\n)\nSELECT checkpoint_label, AVG(our_acc) AS mean_acc, AVG(our_auc) AS mean_auc, MIN(our_acc) AS worst_acc, MIN(our_auc) AS worst_auc\nFROM combined GROUP BY checkpoint_label",
+          "tables_used": [
+            "eval_results/stage2_downstream_shared120_best_auc/combined_attack_eval_summary.csv",
+            "eval_results/downstream_meta_checkpoint_sweep/combined_attack_eval_summary.csv"
+          ],
+          "filters": [
+            "Nine common attacks only",
+            "Five test repetitions per attack",
+            "MetaSpiderMark 116 is the primary comparison baseline"
+          ],
+          "metric_definitions": [
+            "Mean AUROC: unweighted arithmetic mean of AUROC across the nine common attacks.",
+            "Mean accuracy: unweighted arithmetic mean of fixed 0.5-threshold accuracy across the nine common attacks.",
+            "Worst-attack AUROC: minimum AUROC across the nine common attacks.",
+            "Delta versus MetaSpiderMark 116: candidate metric minus the corresponding MetaSpiderMark epoch-116 metric."
+          ]
+        }
+      },
+      {
+        "id": "baseline_eval",
+        "label": "Shared downstream baseline evaluation",
+        "path": "eval_results/stage2_downstream_shared120_best_auc/combined_attack_eval_summary.csv",
+        "query": {
+          "engine": "duckdb",
+          "language": "sql",
+          "description": "Five downstream baselines evaluated on a shared generated attack stream.",
+          "sql": "SELECT * FROM read_csv_auto('eval_results/stage2_downstream_shared120_best_auc/combined_attack_eval_summary.csv')",
+          "tables_used": [
+            "eval_results/stage2_downstream_shared120_best_auc/combined_attack_eval_summary.csv"
+          ],
+          "filters": [
+            "Nine named attacks",
+            "Five testing repetitions per attack"
+          ],
+          "metric_definitions": [
+            "mean_auc: arithmetic mean of model AUROC across the nine attacks.",
+            "mean_acc: arithmetic mean of fixed-threshold accuracy across the nine attacks.",
+            "worst_auc: minimum model AUROC among the nine attacks.",
+            "worst_acc: minimum fixed-threshold accuracy among the nine attacks."
+          ]
+        }
+      },
+      {
+        "id": "meta_eval",
+        "label": "Historical MetaSpiderMark checkpoint sweep",
+        "path": "eval_results/downstream_meta_checkpoint_sweep/combined_attack_eval_summary.csv",
+        "query": {
+          "engine": "duckdb",
+          "language": "sql",
+          "description": "MetaSpiderMark epochs 110, 116, and 300 evaluated in the earlier checkpoint sweep.",
+          "sql": "SELECT * FROM read_csv_auto('eval_results/downstream_meta_checkpoint_sweep/combined_attack_eval_summary.csv')",
+          "tables_used": [
+            "eval_results/downstream_meta_checkpoint_sweep/combined_attack_eval_summary.csv"
+          ],
+          "filters": [
+            "Nine named attacks",
+            "Five testing repetitions per attack"
+          ],
+          "metric_definitions": [
+            "mean_auc: arithmetic mean of model AUROC across the nine attacks.",
+            "mean_acc: arithmetic mean of fixed-threshold accuracy across the nine attacks.",
+            "worst_auc: minimum model AUROC among the nine attacks.",
+            "worst_acc: minimum fixed-threshold accuracy among the nine attacks."
+          ]
+        }
+      }
+    ],
+    "blocks": [
+      {
+        "id": "title",
+        "type": "markdown",
+        "body": "# Downstream Robustness: MetaSpiderMark vs Scheduler Baselines"
+      },
+      {
+        "id": "technical_summary",
+        "type": "markdown",
+        "body": "## Technical summary\n\n**Uniform is the current average-performance leader**, reaching 0.9736 mean AUROC and 92.86% mean accuracy, ahead of MetaSpiderMark 116 by 0.0050 AUROC and 1.04 percentage points of accuracy. **MetaSpiderMark 116 remains the strongest robustness-floor model**, with 0.8830 worst-attack AUROC versus Uniform's 0.8809. Bandit-UCB also exceeds MetaSpiderMark 116 on mean AUROC, but not on mean accuracy. The remaining scheduler baselines trail MetaSpiderMark 116 on average AUROC.\n\nThese differences are **directional rather than final paired estimates**: all five scheduler baselines shared identical realized attack samples, whereas the historical MetaSpiderMark sweep used a separate random stream. A seeded MetaSpiderMark re-evaluation is required before making a publication claim about small gaps."
+      },
+      {
+        "id": "headline_metrics",
+        "type": "metric-strip",
+        "cardIds": [
+          "uniform_auc",
+          "uniform_accuracy",
+          "meta_floor"
+        ]
+      },
+      {
+        "id": "profile_finding",
+        "type": "markdown",
+        "body": "## Uniform leads on average; MetaSpiderMark protects the floor\n\nThe paired bars separate overall discrimination from the weakest attack. Uniform ranks first on mean AUROC, but MetaSpiderMark 116 has the highest minimum AUROC and the highest minimum accuracy. This makes Uniform the strongest current all-attack average, while MetaSpiderMark remains the safer choice when the hardest transformation is the decision criterion."
+      },
+      {
+        "id": "profile_chart_block",
+        "type": "chart",
+        "chartId": "auroc_profile",
+        "layout": "full"
+      },
+      {
+        "id": "aggregate_table_block",
+        "type": "table",
+        "tableId": "aggregate_table",
+        "layout": "full"
+      },
+      {
+        "id": "delta_finding",
+        "type": "markdown",
+        "body": "## Only Uniform clearly improves both headline averages\n\nUniform improves both mean accuracy and mean AUROC versus MetaSpiderMark 116. Bandit-UCB gains 0.0020 mean AUROC but loses 1.20 percentage points of accuracy, indicating stronger ranking quality with weaker calibration at the fixed 0.5 threshold. ASR is close on accuracy but lower on AUROC; ATS and BASS are lower on both aggregate measures."
+      },
+      {
+        "id": "delta_chart_block",
+        "type": "chart",
+        "chartId": "mean_auc_delta",
+        "layout": "full"
+      },
+      {
+        "id": "attack_finding",
+        "type": "markdown",
+        "body": "## Uniform's gain is broad, but not universal\n\nUniform exceeds the historical MetaSpiderMark 116 AUROC on eight of nine attacks. Its largest visible gains occur under blur and strong JPEG compression. MetaSpiderMark 116 remains slightly better on the hardest training-augmentation mixture and has higher fixed-threshold accuracy under the messaging-app combination. The signed bars show where the aggregate advantage originates and where it reverses."
+      },
+      {
+        "id": "attack_delta_chart_block",
+        "type": "chart",
+        "chartId": "uniform_attack_delta",
+        "layout": "full"
+      },
+      {
+        "id": "attack_table_block",
+        "type": "table",
+        "tableId": "attack_table",
+        "layout": "full"
+      },
+      {
+        "id": "scope_definitions",
+        "type": "markdown",
+        "body": "## Scope and metric definitions\n\nThe comparison covers the same nine attack categories: clean, strong JPEG, messaging-app combination, down/up sampling, blur, random crop, occlusion, geometric warp, and the training-augmentation mixture. Each attack result pools five testing repetitions over the 15% validation split.\n\n**Accuracy** uses the verifier's fixed 0.5 decision threshold and therefore reflects discrimination plus calibration. **AUROC** measures threshold-free ranking quality. **Mean** metrics are unweighted arithmetic averages across the nine attacks. **Worst** metrics are the minimum across attacks and represent the observed robustness floor."
+      },
+      {
+        "id": "methodology",
+        "type": "markdown",
+        "body": "## Evaluation and checkpoint methodology\n\nThe five scheduler baselines were downstream-trained together to epoch 120 using a shared on-the-fly batch stream, fixed MetaSpiderMark learning rates, and no learning-rate scheduler. Their reported checkpoints maximize augmented-validation AUROC: Uniform epoch 5, Bandit-UCB epoch 68, ATS epoch 49, BASS epoch 68, and ASR epoch 35.\n\nMetaSpiderMark 116 is the primary historical comparator because it achieved the best attack-sweep result and highest augmented-validation accuracy; MetaSpiderMark 110 is retained as the validation-AUROC-selected comparator. The report also includes the epoch-300 endpoint for context. No attack-test result was used to select any of the five new baseline checkpoints."
+      },
+      {
+        "id": "limitations",
+        "type": "markdown",
+        "body": "## Limitations and confidence assessment\n\n**Assessment: share with caveats.** The attack names, dataset split, testing count, transforms, and metrics align, but the historical MetaSpiderMark run did not evaluate the exact realized tensors used by the shared baseline run. Small differences\u2014especially the 0.0020\u20130.0050 AUROC gaps\u2014may therefore include random attack-sampling variation.\n\nCheckpoint-selection criteria also differ: the five new baselines use best augmented-validation AUROC, MetaSpiderMark 116 was identified by augmented-validation accuracy and downstream attack performance, and MetaSpiderMark 110 is its best augmented-validation-AUROC checkpoint. The results are descriptive; no confidence intervals or statistical significance tests are available from the summary files alone."
+      },
+      {
+        "id": "next_steps",
+        "type": "markdown",
+        "body": "## Recommended next steps\n\n1. Re-evaluate MetaSpiderMark 116 and 110 with the same attack-local seeds used by the shared baseline evaluator; no retraining is required.\n2. Rebuild this report from the paired outputs and treat that version as the publication-ready comparison.\n3. Report both average and worst-attack metrics: average-only reporting would hide MetaSpiderMark's stronger robustness floor.\n4. If model ranking remains close, retain per-example predictions and use paired bootstrap intervals for AUROC and accuracy deltas."
+      },
+      {
+        "id": "further_questions",
+        "type": "markdown",
+        "body": "## Further questions\n\n- Does Uniform's advantage persist when MetaSpiderMark is evaluated on the exact same seeded tensors?\n- Are the fixed-threshold accuracy differences mainly calibration effects that disappear after validation-only threshold calibration?\n- Do the scheduler rankings remain stable across additional training seeds, or are they specific to seed 0?"
+      }
+    ]
+  },
+  "snapshot": {
+    "version": 1,
+    "generatedAt": "2026-08-11T18:35:49+10:00",
+    "status": "ready",
+    "datasets": {
+      "summary": [
+        {
+          "uniform_mean_auroc": 0.97362255,
+          "uniform_mean_auroc_delta": 0.00499752,
+          "uniform_mean_accuracy": 0.92859259,
+          "uniform_mean_accuracy_delta": 0.01037037,
+          "meta116_worst_auroc": 0.88301658,
+          "uniform_worst_auroc": 0.88090569,
+          "meta_floor_advantage": 0.00211089
+        }
+      ],
+      "aggregate": [
+        {
+          "model": "Uniform",
+          "checkpoint_epoch": 5,
+          "selection_basis": "Best augmented-validation AUROC through epoch 120",
+          "attacks": 9,
+          "mean_accuracy": 0.92859259,
+          "mean_auroc": 0.97362255,
+          "worst_accuracy": 0.776,
+          "worst_auroc": 0.88090569,
+          "delta_mean_accuracy_vs_meta116": 0.01037037,
+          "delta_mean_auroc_vs_meta116": 0.00499752,
+          "mean_auroc_rank": 1,
+          "mean_accuracy_rank": 1
+        },
+        {
+          "model": "Bandit-UCB",
+          "checkpoint_epoch": 68,
+          "selection_basis": "Best augmented-validation AUROC through epoch 120",
+          "attacks": 9,
+          "mean_accuracy": 0.90622222,
+          "mean_auroc": 0.97058378,
+          "worst_accuracy": 0.75733333,
+          "worst_auroc": 0.87894455,
+          "delta_mean_accuracy_vs_meta116": -0.012,
+          "delta_mean_auroc_vs_meta116": 0.00195876,
+          "mean_auroc_rank": 2,
+          "mean_accuracy_rank": 5
+        },
+        {
+          "model": "MetaSpiderMark 116",
+          "checkpoint_epoch": 116,
+          "selection_basis": "Highest augmented-validation accuracy in MetaSpiderMark history",
+          "attacks": 9,
+          "mean_accuracy": 0.91822222,
+          "mean_auroc": 0.96862503,
+          "worst_accuracy": 0.80266667,
+          "worst_auroc": 0.88301658,
+          "delta_mean_accuracy_vs_meta116": 0.0,
+          "delta_mean_auroc_vs_meta116": 0.0,
+          "mean_auroc_rank": 3,
+          "mean_accuracy_rank": 2
+        },
+        {
+          "model": "MetaSpiderMark 110",
+          "checkpoint_epoch": 110,
+          "selection_basis": "Highest augmented-validation AUROC in MetaSpiderMark history",
+          "attacks": 9,
+          "mean_accuracy": 0.90755556,
+          "mean_auroc": 0.96617658,
+          "worst_accuracy": 0.76666667,
+          "worst_auroc": 0.86608665,
+          "delta_mean_accuracy_vs_meta116": -0.01066667,
+          "delta_mean_auroc_vs_meta116": -0.00244845,
+          "mean_auroc_rank": 4,
+          "mean_accuracy_rank": 4
+        },
+        {
+          "model": "ASR",
+          "checkpoint_epoch": 35,
+          "selection_basis": "Best augmented-validation AUROC through epoch 120",
+          "attacks": 9,
+          "mean_accuracy": 0.91525926,
+          "mean_auroc": 0.96485093,
+          "worst_accuracy": 0.76933333,
+          "worst_auroc": 0.86768408,
+          "delta_mean_accuracy_vs_meta116": -0.00296296,
+          "delta_mean_auroc_vs_meta116": -0.00377409,
+          "mean_auroc_rank": 5,
+          "mean_accuracy_rank": 3
+        },
+        {
+          "model": "ATS",
+          "checkpoint_epoch": 49,
+          "selection_basis": "Best augmented-validation AUROC through epoch 120",
+          "attacks": 9,
+          "mean_accuracy": 0.89585185,
+          "mean_auroc": 0.96368059,
+          "worst_accuracy": 0.73733333,
+          "worst_auroc": 0.87108576,
+          "delta_mean_accuracy_vs_meta116": -0.02237037,
+          "delta_mean_auroc_vs_meta116": -0.00494443,
+          "mean_auroc_rank": 6,
+          "mean_accuracy_rank": 7
+        },
+        {
+          "model": "BASS",
+          "checkpoint_epoch": 68,
+          "selection_basis": "Best augmented-validation AUROC through epoch 120",
+          "attacks": 9,
+          "mean_accuracy": 0.90044444,
+          "mean_auroc": 0.96171787,
+          "worst_accuracy": 0.77066667,
+          "worst_auroc": 0.86888215,
+          "delta_mean_accuracy_vs_meta116": -0.01777778,
+          "delta_mean_auroc_vs_meta116": -0.00690715,
+          "mean_auroc_rank": 7,
+          "mean_accuracy_rank": 6
+        },
+        {
+          "model": "MetaSpiderMark final (300)",
+          "checkpoint_epoch": 300,
+          "selection_basis": "Epoch-300 endpoint",
+          "attacks": 9,
+          "mean_accuracy": 0.89585185,
+          "mean_auroc": 0.95446207,
+          "worst_accuracy": 0.748,
+          "worst_auroc": 0.8388875,
+          "delta_mean_accuracy_vs_meta116": -0.02237037,
+          "delta_mean_auroc_vs_meta116": -0.01416295,
+          "mean_auroc_rank": 8,
+          "mean_accuracy_rank": 7
+        }
+      ],
+      "auroc_profile": [
+        {
+          "model": "Uniform",
+          "scope": "Mean AUROC",
+          "auroc": 0.97362255,
+          "checkpoint_epoch": 5,
+          "mean_accuracy": 0.92859259,
+          "worst_accuracy": 0.776,
+          "rank": 1
+        },
+        {
+          "model": "Uniform",
+          "scope": "Worst-attack AUROC",
+          "auroc": 0.88090569,
+          "checkpoint_epoch": 5,
+          "mean_accuracy": 0.92859259,
+          "worst_accuracy": 0.776,
+          "rank": 1
+        },
+        {
+          "model": "Bandit-UCB",
+          "scope": "Mean AUROC",
+          "auroc": 0.97058378,
+          "checkpoint_epoch": 68,
+          "mean_accuracy": 0.90622222,
+          "worst_accuracy": 0.75733333,
+          "rank": 2
+        },
+        {
+          "model": "Bandit-UCB",
+          "scope": "Worst-attack AUROC",
+          "auroc": 0.87894455,
+          "checkpoint_epoch": 68,
+          "mean_accuracy": 0.90622222,
+          "worst_accuracy": 0.75733333,
+          "rank": 2
+        },
+        {
+          "model": "MetaSpiderMark 116",
+          "scope": "Mean AUROC",
+          "auroc": 0.96862503,
+          "checkpoint_epoch": 116,
+          "mean_accuracy": 0.91822222,
+          "worst_accuracy": 0.80266667,
+          "rank": 3
+        },
+        {
+          "model": "MetaSpiderMark 116",
+          "scope": "Worst-attack AUROC",
+          "auroc": 0.88301658,
+          "checkpoint_epoch": 116,
+          "mean_accuracy": 0.91822222,
+          "worst_accuracy": 0.80266667,
+          "rank": 3
+        },
+        {
+          "model": "MetaSpiderMark 110",
+          "scope": "Mean AUROC",
+          "auroc": 0.96617658,
+          "checkpoint_epoch": 110,
+          "mean_accuracy": 0.90755556,
+          "worst_accuracy": 0.76666667,
+          "rank": 4
+        },
+        {
+          "model": "MetaSpiderMark 110",
+          "scope": "Worst-attack AUROC",
+          "auroc": 0.86608665,
+          "checkpoint_epoch": 110,
+          "mean_accuracy": 0.90755556,
+          "worst_accuracy": 0.76666667,
+          "rank": 4
+        },
+        {
+          "model": "ASR",
+          "scope": "Mean AUROC",
+          "auroc": 0.96485093,
+          "checkpoint_epoch": 35,
+          "mean_accuracy": 0.91525926,
+          "worst_accuracy": 0.76933333,
+          "rank": 5
+        },
+        {
+          "model": "ASR",
+          "scope": "Worst-attack AUROC",
+          "auroc": 0.86768408,
+          "checkpoint_epoch": 35,
+          "mean_accuracy": 0.91525926,
+          "worst_accuracy": 0.76933333,
+          "rank": 5
+        },
+        {
+          "model": "ATS",
+          "scope": "Mean AUROC",
+          "auroc": 0.96368059,
+          "checkpoint_epoch": 49,
+          "mean_accuracy": 0.89585185,
+          "worst_accuracy": 0.73733333,
+          "rank": 6
+        },
+        {
+          "model": "ATS",
+          "scope": "Worst-attack AUROC",
+          "auroc": 0.87108576,
+          "checkpoint_epoch": 49,
+          "mean_accuracy": 0.89585185,
+          "worst_accuracy": 0.73733333,
+          "rank": 6
+        },
+        {
+          "model": "BASS",
+          "scope": "Mean AUROC",
+          "auroc": 0.96171787,
+          "checkpoint_epoch": 68,
+          "mean_accuracy": 0.90044444,
+          "worst_accuracy": 0.77066667,
+          "rank": 7
+        },
+        {
+          "model": "BASS",
+          "scope": "Worst-attack AUROC",
+          "auroc": 0.86888215,
+          "checkpoint_epoch": 68,
+          "mean_accuracy": 0.90044444,
+          "worst_accuracy": 0.77066667,
+          "rank": 7
+        },
+        {
+          "model": "MetaSpiderMark final (300)",
+          "scope": "Mean AUROC",
+          "auroc": 0.95446207,
+          "checkpoint_epoch": 300,
+          "mean_accuracy": 0.89585185,
+          "worst_accuracy": 0.748,
+          "rank": 8
+        },
+        {
+          "model": "MetaSpiderMark final (300)",
+          "scope": "Worst-attack AUROC",
+          "auroc": 0.8388875,
+          "checkpoint_epoch": 300,
+          "mean_accuracy": 0.89585185,
+          "worst_accuracy": 0.748,
+          "rank": 8
+        }
+      ],
+      "aggregate_delta": [
+        {
+          "model": "Uniform",
+          "checkpoint_epoch": 5,
+          "selection_basis": "Best augmented-validation AUROC through epoch 120",
+          "attacks": 9,
+          "mean_accuracy": 0.92859259,
+          "mean_auroc": 0.97362255,
+          "worst_accuracy": 0.776,
+          "worst_auroc": 0.88090569,
+          "delta_mean_accuracy_vs_meta116": 0.01037037,
+          "delta_mean_auroc_vs_meta116": 0.00499752,
+          "mean_auroc_rank": 1,
+          "mean_accuracy_rank": 1
+        },
+        {
+          "model": "Bandit-UCB",
+          "checkpoint_epoch": 68,
+          "selection_basis": "Best augmented-validation AUROC through epoch 120",
+          "attacks": 9,
+          "mean_accuracy": 0.90622222,
+          "mean_auroc": 0.97058378,
+          "worst_accuracy": 0.75733333,
+          "worst_auroc": 0.87894455,
+          "delta_mean_accuracy_vs_meta116": -0.012,
+          "delta_mean_auroc_vs_meta116": 0.00195876,
+          "mean_auroc_rank": 2,
+          "mean_accuracy_rank": 5
+        },
+        {
+          "model": "MetaSpiderMark 110",
+          "checkpoint_epoch": 110,
+          "selection_basis": "Highest augmented-validation AUROC in MetaSpiderMark history",
+          "attacks": 9,
+          "mean_accuracy": 0.90755556,
+          "mean_auroc": 0.96617658,
+          "worst_accuracy": 0.76666667,
+          "worst_auroc": 0.86608665,
+          "delta_mean_accuracy_vs_meta116": -0.01066667,
+          "delta_mean_auroc_vs_meta116": -0.00244845,
+          "mean_auroc_rank": 4,
+          "mean_accuracy_rank": 4
+        },
+        {
+          "model": "ASR",
+          "checkpoint_epoch": 35,
+          "selection_basis": "Best augmented-validation AUROC through epoch 120",
+          "attacks": 9,
+          "mean_accuracy": 0.91525926,
+          "mean_auroc": 0.96485093,
+          "worst_accuracy": 0.76933333,
+          "worst_auroc": 0.86768408,
+          "delta_mean_accuracy_vs_meta116": -0.00296296,
+          "delta_mean_auroc_vs_meta116": -0.00377409,
+          "mean_auroc_rank": 5,
+          "mean_accuracy_rank": 3
+        },
+        {
+          "model": "ATS",
+          "checkpoint_epoch": 49,
+          "selection_basis": "Best augmented-validation AUROC through epoch 120",
+          "attacks": 9,
+          "mean_accuracy": 0.89585185,
+          "mean_auroc": 0.96368059,
+          "worst_accuracy": 0.73733333,
+          "worst_auroc": 0.87108576,
+          "delta_mean_accuracy_vs_meta116": -0.02237037,
+          "delta_mean_auroc_vs_meta116": -0.00494443,
+          "mean_auroc_rank": 6,
+          "mean_accuracy_rank": 7
+        },
+        {
+          "model": "BASS",
+          "checkpoint_epoch": 68,
+          "selection_basis": "Best augmented-validation AUROC through epoch 120",
+          "attacks": 9,
+          "mean_accuracy": 0.90044444,
+          "mean_auroc": 0.96171787,
+          "worst_accuracy": 0.77066667,
+          "worst_auroc": 0.86888215,
+          "delta_mean_accuracy_vs_meta116": -0.01777778,
+          "delta_mean_auroc_vs_meta116": -0.00690715,
+          "mean_auroc_rank": 7,
+          "mean_accuracy_rank": 6
+        },
+        {
+          "model": "MetaSpiderMark final (300)",
+          "checkpoint_epoch": 300,
+          "selection_basis": "Epoch-300 endpoint",
+          "attacks": 9,
+          "mean_accuracy": 0.89585185,
+          "mean_auroc": 0.95446207,
+          "worst_accuracy": 0.748,
+          "worst_auroc": 0.8388875,
+          "delta_mean_accuracy_vs_meta116": -0.02237037,
+          "delta_mean_auroc_vs_meta116": -0.01416295,
+          "mean_auroc_rank": 8,
+          "mean_accuracy_rank": 7
+        }
+      ],
+      "attack_delta": [
+        {
+          "attack": "Clean",
+          "attack_key": "clean",
+          "uniform_accuracy": 0.99333333,
+          "meta116_accuracy": 0.98,
+          "delta_accuracy": 0.01333333,
+          "uniform_auroc": 1.0,
+          "meta116_auroc": 0.99946515,
+          "delta_auroc": 0.00053485,
+          "baseline_predictions": 750,
+          "meta_predictions": 750,
+          "paired_realized_tensors": "No"
+        },
+        {
+          "attack": "Jpeg Strong",
+          "attack_key": "jpeg_strong",
+          "uniform_accuracy": 0.98266667,
+          "meta116_accuracy": 0.93466667,
+          "delta_accuracy": 0.048,
+          "uniform_auroc": 0.99811018,
+          "meta116_auroc": 0.98665716,
+          "delta_auroc": 0.01145302,
+          "baseline_predictions": 750,
+          "meta_predictions": 750,
+          "paired_realized_tensors": "No"
+        },
+        {
+          "attack": "Msg App Combo",
+          "attack_key": "msg_app_combo",
+          "uniform_accuracy": 0.89733333,
+          "meta116_accuracy": 0.91733333,
+          "delta_accuracy": -0.02,
+          "uniform_auroc": 0.96335889,
+          "meta116_auroc": 0.95579961,
+          "delta_auroc": 0.00755928,
+          "baseline_predictions": 750,
+          "meta_predictions": 750,
+          "paired_realized_tensors": "No"
+        },
+        {
+          "attack": "Down Up",
+          "attack_key": "down_up",
+          "uniform_accuracy": 0.98,
+          "meta116_accuracy": 0.95333333,
+          "delta_accuracy": 0.02666667,
+          "uniform_auroc": 0.99893029,
+          "meta116_auroc": 0.99393831,
+          "delta_auroc": 0.00499198,
+          "baseline_predictions": 750,
+          "meta_predictions": 750,
+          "paired_realized_tensors": "No"
+        },
+        {
+          "attack": "Blur",
+          "attack_key": "blur",
+          "uniform_accuracy": 0.932,
+          "meta116_accuracy": 0.904,
+          "delta_accuracy": 0.028,
+          "uniform_auroc": 0.98041006,
+          "meta116_auroc": 0.96775183,
+          "delta_auroc": 0.01265823,
+          "baseline_predictions": 750,
+          "meta_predictions": 750,
+          "paired_realized_tensors": "No"
+        },
+        {
+          "attack": "Random Crop",
+          "attack_key": "random_crop",
+          "uniform_accuracy": 0.91466667,
+          "meta116_accuracy": 0.90266667,
+          "delta_accuracy": 0.012,
+          "uniform_auroc": 0.97548939,
+          "meta116_auroc": 0.96910679,
+          "delta_auroc": 0.0063826,
+          "baseline_predictions": 750,
+          "meta_predictions": 750,
+          "paired_realized_tensors": "No"
+        },
+        {
+          "attack": "Occlusion",
+          "attack_key": "occlusion",
+          "uniform_accuracy": 0.99466667,
+          "meta116_accuracy": 0.98,
+          "delta_accuracy": 0.01466667,
+          "uniform_auroc": 1.0,
+          "meta116_auroc": 0.99927973,
+          "delta_auroc": 0.00072027,
+          "baseline_predictions": 750,
+          "meta_predictions": 750,
+          "paired_realized_tensors": "No"
+        },
+        {
+          "attack": "Geom Warp",
+          "attack_key": "geom_warp",
+          "uniform_accuracy": 0.88666667,
+          "meta116_accuracy": 0.88933333,
+          "delta_accuracy": -0.00266667,
+          "uniform_auroc": 0.96539847,
+          "meta116_auroc": 0.96261009,
+          "delta_auroc": 0.00278838,
+          "baseline_predictions": 750,
+          "meta_predictions": 750,
+          "paired_realized_tensors": "No"
+        },
+        {
+          "attack": "Train Aug Mix",
+          "attack_key": "train_aug_mix",
+          "uniform_accuracy": 0.776,
+          "meta116_accuracy": 0.80266667,
+          "delta_accuracy": -0.02666667,
+          "uniform_auroc": 0.88090569,
+          "meta116_auroc": 0.88301658,
+          "delta_auroc": -0.00211089,
+          "baseline_predictions": 750,
+          "meta_predictions": 750,
+          "paired_realized_tensors": "No"
+        }
+      ]
+    }
+  },
+  "sources": [
+    {
+      "id": "comparison_analysis",
+      "label": "Reproducible Stage 2 comparison analysis",
+      "path": "scripts/build_stage2_comparison_report.py",
+      "query": {
+        "engine": "duckdb",
+        "language": "sql",
+        "description": "Combines the reviewed baseline and MetaSpiderMark attack summaries and computes unweighted attack-level aggregates and deltas.",
+        "sql": "WITH combined AS (\n  SELECT checkpoint_label, attack, our_acc, our_auc FROM read_csv_auto('eval_results/stage2_downstream_shared120_best_auc/combined_attack_eval_summary.csv')\n  UNION ALL\n  SELECT checkpoint_label, attack, our_acc, our_auc FROM read_csv_auto('eval_results/downstream_meta_checkpoint_sweep/combined_attack_eval_summary.csv')\n)\nSELECT checkpoint_label, AVG(our_acc) AS mean_acc, AVG(our_auc) AS mean_auc, MIN(our_acc) AS worst_acc, MIN(our_auc) AS worst_auc\nFROM combined GROUP BY checkpoint_label",
+        "tables_used": [
+          "eval_results/stage2_downstream_shared120_best_auc/combined_attack_eval_summary.csv",
+          "eval_results/downstream_meta_checkpoint_sweep/combined_attack_eval_summary.csv"
+        ],
+        "filters": [
+          "Nine common attacks only",
+          "Five test repetitions per attack",
+          "MetaSpiderMark 116 is the primary comparison baseline"
+        ],
+        "metric_definitions": [
+          "Mean AUROC: unweighted arithmetic mean of AUROC across the nine common attacks.",
+          "Mean accuracy: unweighted arithmetic mean of fixed 0.5-threshold accuracy across the nine common attacks.",
+          "Worst-attack AUROC: minimum AUROC across the nine common attacks.",
+          "Delta versus MetaSpiderMark 116: candidate metric minus the corresponding MetaSpiderMark epoch-116 metric."
+        ]
+      }
+    },
+    {
+      "id": "baseline_eval",
+      "label": "Shared downstream baseline evaluation",
+      "path": "eval_results/stage2_downstream_shared120_best_auc/combined_attack_eval_summary.csv",
+      "query": {
+        "engine": "duckdb",
+        "language": "sql",
+        "description": "Five downstream baselines evaluated on a shared generated attack stream.",
+        "sql": "SELECT * FROM read_csv_auto('eval_results/stage2_downstream_shared120_best_auc/combined_attack_eval_summary.csv')",
+        "tables_used": [
+          "eval_results/stage2_downstream_shared120_best_auc/combined_attack_eval_summary.csv"
+        ],
+        "filters": [
+          "Nine named attacks",
+          "Five testing repetitions per attack"
+        ],
+        "metric_definitions": [
+          "mean_auc: arithmetic mean of model AUROC across the nine attacks.",
+          "mean_acc: arithmetic mean of fixed-threshold accuracy across the nine attacks.",
+          "worst_auc: minimum model AUROC among the nine attacks.",
+          "worst_acc: minimum fixed-threshold accuracy among the nine attacks."
+        ]
+      }
+    },
+    {
+      "id": "meta_eval",
+      "label": "Historical MetaSpiderMark checkpoint sweep",
+      "path": "eval_results/downstream_meta_checkpoint_sweep/combined_attack_eval_summary.csv",
+      "query": {
+        "engine": "duckdb",
+        "language": "sql",
+        "description": "MetaSpiderMark epochs 110, 116, and 300 evaluated in the earlier checkpoint sweep.",
+        "sql": "SELECT * FROM read_csv_auto('eval_results/downstream_meta_checkpoint_sweep/combined_attack_eval_summary.csv')",
+        "tables_used": [
+          "eval_results/downstream_meta_checkpoint_sweep/combined_attack_eval_summary.csv"
+        ],
+        "filters": [
+          "Nine named attacks",
+          "Five testing repetitions per attack"
+        ],
+        "metric_definitions": [
+          "mean_auc: arithmetic mean of model AUROC across the nine attacks.",
+          "mean_acc: arithmetic mean of fixed-threshold accuracy across the nine attacks.",
+          "worst_auc: minimum model AUROC among the nine attacks.",
+          "worst_acc: minimum fixed-threshold accuracy among the nine attacks."
+        ]
+      }
+    }
+  ],
+  "package_info": {
+    "root": "papers/meta_learning/reports/downstream_comparison_20260811",
+    "manifestPath": "artifact.json",
+    "snapshotPath": "artifact.json"
+  }
+}

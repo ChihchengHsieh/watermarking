@@ -1,0 +1,36 @@
+\begin{table*}[t]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{2.3pt}
+\caption{Accuracy-first controlled scheduler benchmark on the unseen 1,000-image COCO test set.
+All methods use matched meta-training settings (2,000 steps, $n_s=n_q=8$, seed 19,980,802), a shared downstream-training stream, and checkpoints selected by augmented-validation accuracy with AUROC as the tie-breaker.
+The nine condition columns report fixed-threshold accuracy; the macro means exclude clean and average the eight attacked conditions.
+Brackets give paired image-level bootstrap 95\% confidence intervals from 2,000 resamples.}
+\label{tab:controlled_coco_accuracy_first}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lccccccccccll}
+\toprule
+\textbf{Method} & \textbf{Clean} & \textbf{JPEG} & \textbf{Msg.} & \textbf{Down-up} & \textbf{Blur} & \textbf{Crop} & \textbf{Occ.} & \textbf{Warp} & \textbf{Mix} & \textbf{Mean attack Acc. [95\% CI]} & \textbf{Mean AUROC [95\% CI]} \\
+\midrule
+\textbf{MetaSpiderMark (ours)}
+& 0.974 & 0.942 & \textbf{0.874} & 0.921 & 0.841 & 0.873 & 0.983 & \textbf{0.897} & 0.801
+& \textbf{0.8915 [0.8806, 0.9021]} & 0.9586 [0.9516, 0.9651] \\
+BASS-style
+& 0.978 & \textbf{0.948} & 0.843 & 0.939 & \textbf{0.872} & 0.877 & 0.980 & 0.871 & 0.778
+& 0.8885 [0.8783, 0.8984] & 0.9573 [0.9507, 0.9635] \\
+ATS-style
+& 0.963 & 0.936 & 0.865 & 0.913 & 0.849 & \textbf{0.891} & 0.961 & 0.887 & \textbf{0.805}
+& 0.8884 [0.8778, 0.8988] & 0.9547 [0.9481, 0.9613] \\
+Uniform
+& 0.972 & 0.942 & 0.808 & 0.940 & 0.856 & 0.868 & 0.978 & 0.892 & 0.789
+& 0.8841 [0.8735, 0.8945] & \textbf{0.9600 [0.9537, 0.9664]} \\
+Adaptive Sampler-style (ASR)
+& \textbf{0.983} & 0.945 & 0.808 & \textbf{0.946} & 0.857 & 0.864 & \textbf{0.986} & 0.874 & 0.773
+& 0.8816 [0.8711, 0.8923] & 0.9596 [0.9532, 0.9659] \\
+Bandit-UCB
+& 0.972 & 0.939 & 0.847 & 0.930 & 0.840 & 0.862 & 0.976 & 0.873 & 0.786
+& 0.8816 [0.8708, 0.8921] & 0.9527 [0.9460, 0.9590] \\
+\bottomrule
+\end{tabular}%
+}
+\end{table*}

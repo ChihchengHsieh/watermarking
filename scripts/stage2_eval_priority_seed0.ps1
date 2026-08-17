@@ -1,10 +1,11 @@
 param(
     [string]$ManifestCsv = "papers/meta_learning/benchmark_outputs/stage2_scheduler_benchmark/scheduler_runs.csv",
     [string[]]$RunIds = @(
+        "scheduler_uniform_seed0_steps2000",
+        "scheduler_bandit_ucb_seed0_steps2000",
         "scheduler_ats_seed0_steps2000",
         "scheduler_bass_seed0_steps2000",
-        "scheduler_bandit_ucb_seed0_steps2000",
-        "scheduler_residual_seed0_steps2000"
+        "scheduler_asr_seed0_steps2000"
     ),
     [switch]$IncludeAnchor,
     [switch]$Execute,
@@ -14,6 +15,18 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+$RequiredEvaluationProtocol = "episodic_adaptation_v1"
+
+function Test-ValidEvaluationCsv {
+    param([string]$Path)
+    if (!(Test-Path $Path)) { return $false }
+    $first = Import-Csv $Path | Select-Object -First 1
+    return (
+        $null -ne $first -and
+        $first.PSObject.Properties.Name -contains "evaluation_protocol" -and
+        $first.evaluation_protocol -eq $RequiredEvaluationProtocol
+    )
+}
 
 if (!(Test-Path $ManifestCsv)) {
     throw "Manifest CSV not found: $ManifestCsv. Generate it with scripts\stage2_scheduler_manifest.ps1"
@@ -42,7 +55,7 @@ $ready = @()
 $status = @()
 foreach ($row in $selected) {
     $hasCheckpoint = Test-Path $row.checkpoint_path
-    $hasEval = Test-Path $row.eval_csv
+    $hasEval = Test-ValidEvaluationCsv $row.eval_csv
     $state = if ($hasEval) {
         "already_evaluated"
     } elseif ($hasCheckpoint) {

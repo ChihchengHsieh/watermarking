@@ -1,0 +1,7 @@
+method,best_accuracy_epoch,accuracy_patience,best_auroc_epoch,auroc_patience,best_rolling5_accuracy_epoch,rolling5_accuracy_patience,best_rolling5_auroc_epoch,rolling5_auroc_patience,old_new_acc_best_by100,old_new_acc_best_by120,old_new_auc_best_by100,old_new_auc_best_by120
+ASR,68,19,68,19,39,48,41,46,False,False,False,False
+Uniform,68,19,64,23,39,48,41,46,False,False,False,False
+MetaSpiderMark original,64,23,64,23,43,44,42,45,False,False,False,False
+ATS,25,62,13,74,42,45,39,48,False,False,False,False
+Bandit UCB,13,74,87,0,39,48,38,49,False,False,False,False
+BASS,13,74,13,74,27,60,38,49,False,False,False,False

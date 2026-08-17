@@ -5,6 +5,7 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+$RequiredEvaluationProtocol = "episodic_adaptation_v1"
 
 $AttackOrder = @(
     "clean",
@@ -68,7 +69,16 @@ foreach ($run in $manifest) {
     }
 
     $evalRows = Import-Csv $run.eval_csv
-    foreach ($row in $evalRows) {
+    $protocolRows = @($evalRows | Where-Object {
+        $_.PSObject.Properties.Name -contains "evaluation_protocol" -and
+        $_.evaluation_protocol -eq $RequiredEvaluationProtocol
+    })
+    if ($protocolRows.Count -ne @($evalRows).Count -or $protocolRows.Count -eq 0) {
+        Write-Warning "Ignoring stale/incompatible evaluation CSV: $($run.eval_csv)"
+        $missing += $run
+        continue
+    }
+    foreach ($row in $protocolRows) {
         $normalized += [pscustomobject]@{
             run_id          = $run.run_id
             scheduler       = $run.scheduler

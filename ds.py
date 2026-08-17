@@ -259,6 +259,7 @@ class WatermarkOnTheFlyDataset(Dataset):
         include_psnr_l1=False,
         include_mask_patch=False,
         psnr_return_prob=False,
+        inversion_batch_size=8,
     ):
         assert len(file_paths) == len(labels)
         self.file_paths = file_paths
@@ -277,6 +278,7 @@ class WatermarkOnTheFlyDataset(Dataset):
         self.include_mask_patch = include_mask_patch
         self.return_reversed_latents = False  # default behavior
         self.psnr_return_prob = psnr_return_prob
+        self.inversion_batch_size = max(1, int(inversion_batch_size))
 
     def __len__(self):
         return len(self.file_paths)
@@ -296,102 +298,105 @@ class WatermarkOnTheFlyDataset(Dataset):
     def set_return_reversed_latents(self, return_reversed_latents: bool):
         self.return_reversed_latents = return_reversed_latents
 
-    def __getitem__(self, idx):
-        path = self.file_paths[idx]
-        label = int(self.labels[idx])
+    def _process_index_batch(self, indices):
+        """Generate one true diffusion batch while preserving per-image RNG order."""
+        labels = [int(self.labels[idx]) for idx in indices]
+        transformed = []
+        for idx in indices:
+            pil_img = self._load_pil(self.file_paths[idx])
+            if self.image_aug and (random.random() <= self.image_aug_prob):
+                img_aug = self.image_aug(pil_img)
+            else:
+                img_aug = self.test_aug(pil_img)
+            transformed.append(transform_img(img_aug))
 
-        pil_img = self._load_pil(path)
-
-        # --- AUGMENT IMAGE FIRST ---
-
-        if self.image_aug and (random.random() <= self.image_aug_prob):
-            img_aug = self.image_aug(pil_img)
-        else:
-            img_aug = self.test_aug(pil_img)
-
-        # convert to tensor and to device/dtype for pipe
-        tsr_img = transform_img(img_aug).unsqueeze(0)  # (1,C,H,W)
-        # move to corr`ect dtype & device for the unet/vae as the user did earlier:
         target_dtype = next(self.pipe.unet.parameters()).dtype
-        tsr_img = tsr_img.to(dtype=target_dtype, device=self.device)
-
-        # --- encode to image latents ---
+        tsr_imgs = torch.stack(transformed, dim=0).to(
+            dtype=target_dtype, device=self.device
+        )
+        batch_size = len(indices)
         with torch.no_grad():
-            image_latents = self.pipe.get_image_latents(
-                tsr_img, sample=False
-            )  # user's helper expects (C,H,W) or (B,C,H,W)
-            # ensure batch dim
+            image_latents = self.pipe.get_image_latents(tsr_imgs, sample=False)
             if image_latents.ndim == 3:
                 image_latents = image_latents.unsqueeze(0)
-
-            # --- forward/inversion -> x_T (depending on forward_diffusion implementation)
+            text_embeddings = self.text_embeddings
+            if text_embeddings.shape[0] == 1 and batch_size > 1:
+                text_embeddings = text_embeddings.repeat(batch_size, 1, 1)
+            elif text_embeddings.shape[0] != batch_size:
+                raise ValueError(
+                    f"Text embedding batch {text_embeddings.shape[0]} does not match image batch {batch_size}"
+                )
             reversed_latents = self.pipe.forward_diffusion(
                 latents=image_latents,
-                text_embeddings=self.text_embeddings,
+                text_embeddings=text_embeddings,
                 guidance_scale=1,
                 num_inference_steps=self.num_inference_steps,
-            )  # expect tensor shape (B,C,H,W)
+            )
 
             if self.return_reversed_latents:
-                return reversed_latents[0], torch.tensor(label, dtype=torch.long)
+                return [
+                    (reversed_latents[i], torch.tensor(labels[i], dtype=torch.long))
+                    for i in range(batch_size)
+                ]
 
-            psnr_metric = eval_watermark(
-                reversed_latents,  # single sample
-                self.watermarking_mask,
-                self.gt_patch,
-                w_measurement="psnr_complex",
-            )
-
-            l1_metric = eval_watermark(
-                reversed_latents,  # single sample
-                self.watermarking_mask,
-                self.gt_patch,
-                w_measurement="l1_complex",
-            )
-
-            if self.psnr_return_prob:
-                psnr_metric = psnr_to_prob_sigmoid(
-                    psnr_metric, threshold=-4.0, scale=1.0
+            metrics = []
+            for i in range(batch_size):
+                latent = reversed_latents[i : i + 1]
+                psnr_metric = eval_watermark(
+                    latent, self.watermarking_mask, self.gt_patch,
+                    w_measurement="psnr_complex",
                 )
+                l1_metric = eval_watermark(
+                    latent, self.watermarking_mask, self.gt_patch,
+                    w_measurement="l1_complex",
+                )
+                if self.psnr_return_prob:
+                    psnr_metric = psnr_to_prob_sigmoid(
+                        psnr_metric, threshold=-4.0, scale=1.0
+                    )
+                metrics.append((psnr_metric, l1_metric))
 
-            # Keep complex-safe: cast to float32 after splitting real/imag
-            # Compute FFT (complex)
             vis_latent_fft = torch.fft.fftshift(
                 torch.fft.fft2(reversed_latents), dim=(-1, -2)
-            )  # (B,C,H,W) complex
-            # we assume batch==1
-            fft_b = vis_latent_fft[0]
-            # convert to float channels (real, imag) as float32
-            real = fft_b.real.to(dtype=torch.float32)
-            imag = fft_b.imag.to(dtype=torch.float32)
-            fft_ch = torch.cat([real, imag], dim=0)  # (2*C, H, W)
-
-        if self.include_mask_patch:
-            # concatenate watermarking mask and gt_patch as float32 channels
-            mask_ch = self.watermarking_mask.to(dtype=torch.float32).squeeze(
-                0
-            )  # (1,H,W)
-            gt_patch_ch = self.gt_patch.to(dtype=torch.float32).squeeze(0)  # (1,H,W)
-            fft_ch = torch.cat([fft_ch, mask_ch, gt_patch_ch], dim=0)  # (2*C+2, H, W)
-
-            if self.include_psnr_l1:
-                return (
-                    fft_ch,
-                    torch.tensor(psnr_metric, dtype=torch.float32),
-                    torch.tensor(l1_metric, dtype=torch.float32),
-                    torch.tensor(label, dtype=torch.long),
-                )
-            return fft_ch, torch.tensor(label, dtype=torch.long)
-
-        if self.include_psnr_l1:
-            return (
-                fft_ch,
-                torch.tensor(psnr_metric, dtype=torch.float32),
-                torch.tensor(l1_metric, dtype=torch.float32),
-                torch.tensor(label, dtype=torch.long),
+            )
+            fft_channels = torch.cat(
+                [vis_latent_fft.real.float(), vis_latent_fft.imag.float()], dim=1
             )
 
-        return fft_ch, torch.tensor(label, dtype=torch.long)
+        if self.include_mask_patch:
+            mask = self.watermarking_mask.float().expand(batch_size, -1, -1, -1)
+            patch = self.gt_patch.float().expand(batch_size, -1, -1, -1)
+            fft_channels = torch.cat([fft_channels, mask, patch], dim=1)
+
+        outputs = []
+        for i in range(batch_size):
+            label = torch.tensor(labels[i], dtype=torch.long)
+            if self.include_psnr_l1:
+                outputs.append((
+                    fft_channels[i],
+                    torch.tensor(metrics[i][0], dtype=torch.float32),
+                    torch.tensor(metrics[i][1], dtype=torch.float32),
+                    label,
+                ))
+            else:
+                outputs.append((fft_channels[i], label))
+        return outputs
+
+    def get_batch(self, indices, batch_size=None):
+        """Return samples for indices using bounded true diffusion batches."""
+        indices = [int(idx) for idx in indices]
+        limit = self.inversion_batch_size if batch_size is None else max(1, int(batch_size))
+        outputs = []
+        for start in range(0, len(indices), limit):
+            outputs.extend(self._process_index_batch(indices[start : start + limit]))
+        return outputs
+
+    def __getitems__(self, indices):
+        # PyTorch DataLoader calls this fast path for an entire requested batch.
+        return self.get_batch(indices)
+
+    def __getitem__(self, idx):
+        return self._process_index_batch([idx])[0]
 
 
 

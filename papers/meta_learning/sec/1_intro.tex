@@ -36,14 +36,15 @@ An agentic AI scheduler observes online meta-training signals, summarizes the re
 This turns verifier training into a closed-loop process: attack episodes produce support/query losses, the agent interprets those signals, and the resulting task distribution changes the verifier's future training curriculum.
 
 The resulting framework, \emph{Agentic MetaSpiderMark}, preserves the original SpiderMark injection mechanism while replacing static or manually scheduled verifier training with agent-guided attack-task scheduling.
-The central claim is deliberately narrow and testable: an agentic scheduler can improve meta-learning-based verifier robustness by deciding which downstream attacks should receive training attention.
+The central claim is specific and testable: for watermark deployment that prioritizes correct binary decisions at a fixed operating threshold, an agentic scheduler can provide the strongest accuracy-first verifier by deciding which downstream attacks should receive training attention.
 This is different from claiming a new watermark pattern, a new diffusion generator, or a general-purpose meta-learning algorithm.
 It is an extension of SpiderMark focused on agentic control of verifier training.
 
-%Our preliminary evaluation already indicates that this framing is promising.
-%Using the current downstream checkpoint sweep, the meta-learned verifier selected at epoch 116 improves mean accuracy over nine attacks from 0.8499 to 0.9182 and mean AUROC from 0.9293 to 0.9686 compared with the non-meta SpiderMark verifier.
-The improvement is consistent across all evaluated attacks, with particularly large gains under compound message-app processing, blur, and mixed augmentations.
-These results motivate a broader benchmark that compares not only against the original SpiderMark verifier, but also against strong task schedulers under matched attack episodes and compute budgets.
+Our controlled benchmark compares six schedulers under matched attack episodes, compute budgets, downstream batches, and checkpoint-selection rules.
+Because watermark verification ultimately produces a binary decision, we treat fixed-threshold accuracy as the primary deployment metric and AUROC as a complementary threshold-free diagnostic.
+On the unseen 1,000-image COCO test set, Agentic MetaSpiderMark obtains the highest mean fixed-threshold accuracy across eight attacked conditions, reaching 89.15\% compared with 88.85\% for BASS-style scheduling, 88.84\% for ATS-style scheduling, and 88.41\% for uniform sampling.
+No competing scheduler achieves a higher mean accuracy, and paired bootstrapping shows statistically positive advantages over uniform sampling, Adaptive Sampler, and Bandit-UCB.
+The smaller margins over BASS and ATS remain unresolved, so we characterize Agentic MetaSpiderMark as the best accuracy-first scheduler in this controlled benchmark rather than claiming dominance under every attack or metric.
 
 The contributions are as follows:
 \begin{itemize}
@@ -51,5 +52,5 @@ The contributions are as follows:
     \item We formulate SpiderMark verifier training as closed-loop episodic meta-learning: support/query attack episodes update the verifier, while query feedback updates the scheduler's task distribution.
     \item We preserve the original SpiderMark watermark pattern and diffusion generator, making the proposed scheduler a model-agnostic verifier-side training mechanism.
     \item We define a scheduler benchmark that compares the agentic controller against uniform, UCB bandit, ATS-style, BASS-style, and Adaptive Sampler-style task scheduling under matched attack episodes and compute budgets.
-    \item We report preliminary downstream attack results showing consistent gains over a non-meta verifier across nine transformations.
+    \item We report a full 1,000-image COCO test-set evaluation with paired bootstrap confidence intervals, establishing Agentic MetaSpiderMark as the top-ranked accuracy-first scheduler among six matched methods, with statistically positive gains over three of five competitors and competitive AUROC.
 \end{itemize}

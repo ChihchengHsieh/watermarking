@@ -1,13 +1,17 @@
 \begin{table}[t]
 \centering
 \small
-\begin{tabular}{lc}
+\begin{tabular}{lrrrrr}
 \toprule
-Status & Value \\
+Scheduler & Seeds & Mean Acc. & Mean AUROC & Worst Acc. & Worst AUROC \\
 \midrule
-Benchmark results & Pending \\
+uniform & 1 & 0.4441 & 0.9497 & 0.4403 & 0.8657 \\
+bandit\_ucb & 1 & 0.4410 & 0.9505 & 0.4403 & 0.8658 \\
+asr & 1 & 0.4403 & 0.9502 & 0.4403 & 0.8658 \\
+bass & 1 & 0.4403 & 0.9494 & 0.4403 & 0.8666 \\
+ats & 1 & 0.4403 & 0.9492 & 0.4403 & 0.8658 \\
 \bottomrule
 \end{tabular}
-\caption{Stage 2 scheduler benchmark summary. Results are pending because no evaluated scheduler CSVs are available yet.}
+\caption{Stage 2 scheduler benchmark summary under matched attack pools, support/query sizes, and meta-training budget. Uniform is a seed-0 anchor; adaptive scheduler rows receive the main seed budget.}
 \label{tab:stage2_scheduler_summary}
 \end{table}

@@ -136,6 +136,7 @@ def build_validation_dataset(args, pipe, text_embeddings, watermarking_mask, gt_
         watermarking_mask=watermarking_mask,
         gt_patch=gt_patch,
         psnr_return_prob=False,
+        inversion_batch_size=getattr(args, "inversion_batch_size", 8),
     )
     return val_ds
 
