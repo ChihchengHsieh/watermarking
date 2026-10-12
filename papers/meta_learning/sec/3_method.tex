@@ -4,56 +4,94 @@
 \label{sec:method}
 
 \subsection{Preliminaries}
-\textbf{Meta learning:} Aims to develop a learning paradigm capable of acquiring knowledge that generalizes across a variety of (possibly new) tasks (see Fig.~\ref{fig:method_overview} for an overview). This concept of 
+\textbf{Meta learning:} Aims to develop a learning paradigm capable of acquiring knowledge that generalizes across a variety of (possibly new) tasks. See Fig.~\ref{fig:method_overview} for an overview. This concept of 
 ``{\it learning to learn}'' can be formally characterized as follows:
 \begin{equation}
 \min_{\omega} 	
-\mathbb{E}_{ \tau \sim p({\cal T})}\;%{{\cal T}_{\tau}\sim p({\cal T})}\; 
-{\cal L}( D_{\tau};\omega),
-\label{eq:meta}
+\mathbb{E}_{ \tau_k \sim p(\tau)}\;
+{\cal L}( {\cal D}^{(\tau_k)};\omega),
+%{{\cal T}_{\tau}\sim p({\cal T})}\; 
+\label{eq:my_meta}
 \end{equation}
-where $\tau$ %${\cal T}_{\tau}$ 
-denotes the $\tau$-th task sampled from $p(\cal T)$, 
-$D_\tau$ represents that dataset of task ${\tau}$, and
+where $\tau_k$ denotes the $k$-th task sampled from the distribution over tasks $p(\tau)$, ${\cal D}^{(\tau_k)}$ represents the dataset of task ${\tau_k}$, and
 %${\cal L}(D;\omega)$ 
-${\cal L}(D_{\tau};\omega)$
-measures the model performance trained  with $\omega$ on the dataset $D_{\tau}$. In ~\cref{eq:meta}, $\omega$ is known as {\it meta} or {\it across-task} knowledge~\cite{hospedales2021meta}. 
-%Solving ~\cref{eq:meta} requires to assume access to a set of source tasks, i.e.  in $D_s$, sampled from $p({\cal T})$, using  {\it support} (training $D_{S}^{\rm tr}$) and {\it query} (validation $D_{S}^{\rm val}$) sets that are used in the meta training as follows:
-Solving~\cref{eq:meta} assumes access to source tasks sampled from $p(\mathcal{T})$. Each task is associated with its own dataset $D_s$,  partitioned into a \emph{support} (training) set $D_{S}^{\rm tr}$ and a \emph{query} (validation) set $D_{S}^{\rm val}$  that are used in the meta training:
+${\cal L}({\cal D}^{(\tau_k)};\omega)$
+measures the model performance trained  with $\omega$ on the dataset ${\cal D}^{(\tau_k)}$. In ~\cref{eq:meta}, $\omega$ is known as {\it meta} or {\it across-task} knowledge~\cite{hospedales2021meta}. 
+Solving~\cref{eq:my_meta} assumes access to source tasks sampled from $p(\tau)$. In our case the set of tasks are formed by the set different objectives  
+$\tau \in \{ blur \;\; etc \;\; etc \;\; etc \;\; ... PLEASE \; \; COMPLETE\}$
+
+Formally, the set of source tasks $\tau_{\rm tr} \in \{1, ...,T\}$ used in the meta-training is ${\cal D}_{S} = \{ ({\cal D}^{\rm tr}_{S}, \, {\cal D}^{\rm vl}_{S} )^{(i)} \}_{i=1}^{T}$, where each {\it meta training} task, $\tau_{\rm tr}$, has \emph{support} (training) and a \emph{query} (validation) set\footnote{The notation ``tr'', ``vl'', ``ts'', stands for training, validation and test, respectively.}. The meta-training of {\it learning how to learn} is formalized as 
 \begin{equation}
-    \omega^{\star} =  \arg\max_{\omega}  \log p(\omega| D_S).
+    \omega^{\star} =  \arg\max_{\omega}  \log p(\omega| \mathcal{D}_S)
     \label{eq:meta_training_0}
 \end{equation}
-%As shown later in Sec.~\ref{sec:Meta}, Eq.~\ref{eq:meta_training_0} is solved using a bi-level optimization approach.
+Denoting the set of $Q$ target tasks as ${\cal D}_{T} = \{ ({\cal D}^{\rm tr}_{T}, \, {\cal D}^{\rm ts}_{T} )^{(i)} \}_{i=1}^{T}$, where each task has both training and test data. The meta-testing stage aims to benefit from the use of the acquired meta-knowledge $\omega^{\star}$ in ~\cref{eq:meta_training_0} to train the model on each previously unseen target task $\tau_{\rm ts}$. This goal is formalised as:
+\begin{equation}
+    \theta^{{\star}\;(\tau_{\rm ts})}(\omega) = \arg\max_{\theta} \log p (\theta\,|\, \omega^{\star}, {\cal D}_{T}^{{\rm tr}\,(\tau_{\rm ts})}) \label{eq:my_meta-tst}
+\end{equation}
+where $\theta^{{\star}\;(\tau_{\rm ts})}(\omega)$ are the model parameters obtained from the  meta-knowledge $\omega^{\star}$ (in ~\cref{eq:meta_training_0}) trained on the target training data, ${\cal D}_{T}^{{\rm tr}\,(\tau_{\rm ts})}$, of the unseen test task $\tau_{\rm ts}$.
+Equation~\cref{eq:my_meta-tst}, can be solved in bi-level optimization:
+\begin{equation}
+    \omega^{{\star}} = \arg\min_{\omega} {\cal L}_{\rm outer} ({\cal L}_{\rm inner} (\theta(\omega), \mathcal{D}^{{\rm tr}(\tau_{\rm tr})}_{S}),\mathcal{D}^{{\rm vl}(\tau_{\rm tr})}_{S}),\label{eq:meta}
+\end{equation}
+where ${\cal L}_{\rm inner}$, ${\cal L}_{\rm outer}$ refer to the outer and inner objectives, and  $\mathcal{D}^{{\rm tr}(\tau_{\rm tr})}_{S}$, $\mathcal{D}^{{\rm vl}(\tau_{\rm tr})}_{S}$ are the training and validation source data, respectively.
+See  Suppl. Mat. for more details.
 
+{\color{blue}
+
+\begin{algorithm}[t]
+\caption{Meta-training framework}
+\label{alg:meta-training_framework}
+\begin{algorithmic}
+\Require $\omega_0$, $\gamma_1$, $\gamma_2$, $\tau_{\rm tr} \in \{blur,  crop, etc.\}$,etc.
+\For{e = 1:E}
+    \For{ each $\tau_{\rm tr}$}
+        \State$\theta^{(\tau_{\rm tr})}_0 \gets \omega_e$, for $\tau_{\rm tr}$
+        \For{ t = 1: N}
+            \State Compute $\mathcal{L}_{\rm inner}(\theta^{(\tau_{\rm tr})},  \mathcal{D}^{{\rm tr}(\tau_{\rm tr})}_S)$ (~\cref{eq:meta})
+            \State$\theta^{(\tau_{\rm tr})}_{t+1} \gets \theta^{(\tau_{\rm tr})}_t - \gamma_1 \nabla_\theta \mathcal{L}_{\rm inner}(\theta^{(\tau_{\rm tr})}_t,  \mathcal{D}^{{\rm tr}(\tau_{\rm tr})}_S)$
+        \EndFor
+        \State $\theta^{{\star}\;(\tau_{\rm tr})}(\omega)\gets \theta^{(\tau_{\rm tr})}_{N}(\omega)$
+        \State Compute $\mathcal{L}_{\rm outer}(\theta^{{\star}\;(\tau_{\rm tr})}(\omega), \mathcal{D}^{{\rm vl}(\tau_{\rm tr})}_{S})$
+    \EndFor
+    \State $\omega_{e+1} \gets \omega_{e} - \frac{\gamma_2 \nabla_\theta \sum_{\tau_{\rm tr}}\mathcal{L}_{\rm outer}(\theta^{{\star}\;(\tau_{\rm tr})}(\omega), \mathcal{D}^{{\rm vl}(\tau_{\rm tr})}_{S})}{|\tau_{\rm tr}|}$
+%\State $\omega^{\star} \gets \omega_{e+1} $
+\EndFor
+\State $\omega^{\star} \gets \omega_E$
+\end{algorithmic}
+\end{algorithm}
+
+}
+
+\sout{
 \textbf{SpiderMark:}
 SpiderMark is an in-generation diffusion watermarking framework that blends a fixed spider-web pattern into the Fourier representation of the initial latent noise.
 At verification time, it reconstructs an estimate of the initial latent from a query image and uses a learned frequency-domain verifier, optionally augmented with PSNR and $\ell_1$ similarity cues, to predict watermark presence.
 We keep the watermark pattern, diffusion generator, inversion procedure, and verifier architecture unchanged and modify only how the verifier is trained.
+}
 
 
 \subsection{Problem Setup}
 
 
 
-Let $\mathcal{G}$ denote a pretrained diffusion generator and let $W$ be the fixed SpiderMark frequency-domain watermark pattern.
-For a prompt $p$ and initial latent noise $x_T$, SpiderMark generates a clean image from $x_T$ and a watermarked image from a modified latent whose Fourier representation is blended with $W$.
-We keep this injection procedure unchanged.
-Our contribution is the agentic verifier-training procedure: the verifier receives a recovered frequency-domain representation of a query image, optionally together with auxiliary similarity cues, while an agentic scheduler controls which downstream attack tasks are sampled during meta-training.
+Let $\mathcal{G}$ denote a pretrained diffusion generator and let $W$ be the fixed frequency-domain watermark pattern. Concretely, we also adopt a {\it  SpiderMark} based pattern (see [ArXiv] for details), a geometrically
+structured frequency-domain design that introduces both
+radial and angular components. 
+For a prompt $p$ and initial latent noise $x_T$, SpiderMark generates a clean image from $x_T$ and a watermarked image {\color{blue} (is this the verifier ? you are talking about generating two images ... notice that the injection phase only generates the watermarked image ...)}  from a modified latent whose Fourier representation is blended with $W$.
+Our contribution is the agentic verifier-training procedure: the verifier receives a recovered frequency-domain representation of a query image, optionally together with auxiliary similarity cues {\color{blue} (what cues?)}, while an agentic scheduler controls which downstream attack tasks are sampled during meta-training.
 
 We assume a set of downstream attack tasks
-\begin{equation}
-    \mathcal{T} = \{ \tau_1, \ldots, \tau_K \},
-\end{equation}
-where each $\tau_k$ is an image transformation such as JPEG compression, blur, random crop, occlusion, geometric warp, or a compound augmentation.
+$\mathcal{T} = \{ \tau_1, \ldots, \tau_K \}$, 
+where each $\tau_k$ can be one of the following attacks: $(i)$ image transformation (e.g. JPEG compression), $(ii)$ blur, $(iii)$ random crop, $(iv)$ occlusion, $(v)$ geometric warp, or $(vi)$ a compound augmentation.
 Each task preserves the binary verification label but changes the evidence available to the verifier.
-An episode for task $\tau_k$ consists of a support set $\mathcal{S}_k$ and a query set $\mathcal{Q}_k$ sampled after applying the same attack transformation.
+An episode for task $\tau_k$ consists of a support set $\mathcal{S}_k$ {\color{blue} source support set ${\cal D}_{S}^{{\rm tr}(\tau_k)}$ } and a validation query set $\mathcal{Q}_k$ {\color{blue} source validation query set ${\cal D}_{S}^{{\rm vl}(\tau_k)}$}  sampled after applying the same attack transformation.
 The goal is to learn verifier parameters $\theta$ that adapt from $\mathcal{S}_k$ and generalize to $\mathcal{Q}_k$, while also learning a task-exposure policy that emphasizes attacks where the verifier currently needs more robust adaptation.
 
 \begin{figure*}[t]
     \centering
     \includegraphics[width=\textwidth]{figures/metaspidermark_overview_inner_outer_imagegen.png}
-    \caption{\textbf{Agentic MetaSpiderMark overview.}
+    \caption{\textbf{Agentic Meta-Mark overview.}
     The fixed SpiderMark injection pipeline produces clean and watermarked images without modifying the diffusion generator.
     A task sampler constructs attack-conditioned support and query sets.
     In the inner loop, support examples adapt the shared verifier parameters from $\theta$ to $\theta'_k$; in the outer loop, query loss evaluated at $\theta'_k$ updates the shared initialization $\theta$.
@@ -62,24 +100,28 @@ The goal is to learn verifier parameters $\theta$ that adapt from $\mathcal{S}_k
 \end{figure*}
 
 \subsection{Meta-Compatible Verifier}
-
+{\color{red}
+    Remove this part and ref to previous paper, but be careful of the anonymisation.
+}
+{\color{blue} This part should be improves, otherwise the reader does not know the architecture to understand this ...}
 The base SpiderMark verifier uses a ResNet-style backbone over frequency-domain inputs and optionally fuses PSNR and $\ell_1$ cues in the final prediction head.
-For meta-learning, we implement the verifier using meta-parameterized convolution, batch-normalization, and linear layers.
+For meta-learning, we implement the verifier using meta-parameterized convolution, batch-normalization, and linear layers ({\color{blue} why is this important ?)}.
 This allows temporary inner-loop parameter updates without overwriting the base parameters.
-Given input spectrum $x$, PSNR cue $s$, and $\ell_1$ cue $d$, the verifier produces logits
+Given input spectrum $x$, PSNR cue $s$, and $\ell_1$ cue $d$, {\color{blue}(????)} the verifier produces logits
 \begin{equation}
     f_{\theta}(x, s, d) \in \mathbb{R}^2.
 \end{equation}
-When auxiliary cues are disabled, the head receives only the learned feature embedding; otherwise it concatenates the backbone feature with $(s,d)$ before classification.
-This design preserves the original SpiderMark verifier interface while making its parameters compatible with differentiable inner-loop adaptation.
+When auxiliary cues are disabled {\color{blue}(Figure to illustrate this process? )}, the head receives only the learned feature embedding; otherwise it concatenates the backbone feature with $(s,d)$ before classification {\color{blue}(I think it is better to use some analytical notation and pseudocode  instead of just having text ... )}.
+This design preserves the original SpiderMark  {\color{blue} (too much spidermark references)} verifier interface while making its parameters compatible with differentiable inner-loop adaptation.
 
 \subsection{Attack-Conditioned Meta-Training}
 
 For each meta-training iteration $t$, a scheduler samples an attack task $\tau_k$ from a distribution $\pi_t(\tau)$ over $\mathcal{T}$.
-We then construct a support set $\mathcal{S}_k$ and query set $\mathcal{Q}_k$ from the SpiderMark verifier dataset.
-The dataset wrapper temporarily applies the task-specific augmentation while sampling both sets, then restores the base dataset state.
+We then construct a support set $\mathcal{S}_k$ {\color{blue} (source support set ${\cal D}_{S}^{{\rm tr}(\tau_k)}$)} and query set $\mathcal{Q}_k$ {\color{blue} (source query set ${\cal D}_{S}^{{\rm vl}(\tau_k)}$)} from the SpiderMark verifier dataset.
+The dataset wrapper temporarily applies the task-specific augmentation while sampling both sets, then restores the base dataset state {\color{blue} (not clear)}.
 This keeps each episode attack-conditioned while preserving the same clean/watermarked label space.
 
+{\color{blue} (I think we may suppress this, and just mention that we use a CE loss)}
 Let $\ell(f_{\theta}(z), y)$ be the cross-entropy loss for example $z$ with binary label $y$.
 The support and query losses are
 \begin{equation}
@@ -96,7 +138,7 @@ The support and query losses are
     \ell(f_{\theta}(z), y).
 \end{aligned}
 \end{equation}
-The inner update adapts a copy of the verifier parameters using the support loss:
+The inner update adapts a copy of the verifier parameters using the support loss {\color{blue} perhaps here, mention a line of the Alg.1 above ...  }:
 \begin{equation}
     \theta'_k = \theta - \alpha \nabla_{\theta}
     \mathcal{L}_{\mathcal{S}_k}(\theta),

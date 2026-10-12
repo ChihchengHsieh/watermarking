@@ -3,15 +3,78 @@
 \maketitlesupplementary
 
 
-\section{Rationale}
-\label{sec:rationale}
-% 
-Having the supplementary compiled together with the main paper means that:
-% 
-\begin{itemize}
-\item The supplementary can back-reference sections of the main paper, for example, we can refer to \cref{sec:intro};
-\item The main paper can forward reference sub-sections within the supplementary explicitly (e.g. referring to a particular experiment); 
-\item When submitted to arXiv, the supplementary will already included at the end of the paper.
-\end{itemize}
-% 
-To split the supplementary pages from the main paper, you can use \href{https://support.apple.com/en-ca/guide/preview/prvw11793/mac#:~:text=Delete%20a%20page%20from%20a,or%20choose%20Edit%20%3E%20Delete).}{Preview (on macOS)}, \href{https://www.adobe.com/acrobat/how-to/delete-pages-from-pdf.html#:~:text=Choose%20%E2%80%9CTools%E2%80%9D%20%3E%20%E2%80%9COrganize,or%20pages%20from%20the%20file.}{Adobe Acrobat} (on all OSs), as well as \href{https://superuser.com/questions/517986/is-it-possible-to-delete-some-pages-of-a-pdf-document}{command line tools}.
+\paragraph{\bf \textbf{8) Meta-learning Background:}}
+
+The primary aim of meta-learning is to develop a learning paradigm capable of acquiring knowledge that generalizes effectively across a variety of tasks (see Fig.~\ref{fig:method_overview} for an overview). This concept of "{\it learning to learn}" can be formally characterized as follows:
+
+\begin{equation}
+    \min_{\omega} 	
+    \mathbb{E}_{{\tau}_k\sim p({\tau})}\; 
+    {\cal L}({\cal D}^{(\tau_k)};\omega)\label{eq:SP-meta-knowledge}
+\end{equation}
+where ${\tau}_k$ denotes the $k$-th task sampled from $p(\tau)$, ${\cal L}({\cal D}^{(\tau_k)};\omega)$ measures the model performance trained  with $\omega$ on the dataset ${\cal D}^{(\tau_k)}$. In \cref{eq:SP-meta-knowledge},  $\omega$ is known as {\it meta} or {\it across-task} knowledge~\cite{hospedales2021meta}.
+
+For solving~\cref{eq:SP-meta-knowledge}, we assume access to a set of $T$ {\it meta training} tasks, $\tau_{\rm tr}$, used in the meta-training that are sampled from $p({\tau_{\rm tr}})$. This sampling is done using the source dataset  ${\cal D}_{S}=\{ 
+({\cal D}^{\rm tr}_{S},{\cal D}^{\rm vl}_{S})^{(i)}
+\}_{i=1}^T$, where the training 
+${\cal D}^{\rm tr}_{S}$, and validation 
+${\cal D}^{\rm vl}_{S}$ are known 
+as the {\it support} and {\it query} datasets, respectively. This stage aims to estimate the {\it meta-knowledge} as follows:
+\begin{equation}
+    \omega^{\star} = \arg\max_{\omega} \log p (\omega\,|\,{\cal  D}_{S}) \label{eq:SP-meta-trn}
+\end{equation}
+Similarly, in the {\it meta-testing} stage, we also assume a set of $Q$ target tasks. These tasks are used in the dataset ${\cal D}_{T} =
+\{  
+( {\cal D}^{\rm tr}_{T},\,{\cal D}^{\rm ts}_{T} )^{(i)} 
+\}_{i=1}^Q$, where each task, $\tau_{\rm ts}$, has both training and test data (${\cal D}^{\rm tr}_{T}$, ${\cal D}^{\rm ts}_{T}$, respectively). In the meta-testing stage, the learned meta-knowledge $\omega^{\star}$ obtained in \cref{eq:SP-meta-trn} is used to train the base model on each  unseen test task $\tau_{\rm ts}$, that is 
+\begin{equation}
+    \theta^{{\star}\;(\tau_{\rm ts})} = \arg\max_{\theta} \log p (\theta\,|\, \omega^{\star}, {\cal D}_{T}^{{\rm tr}\,(\tau_{\rm ts})}) \label{eq:SM-meta-tst}
+\end{equation}
+where $\theta^{{\star}\;(\tau_{\rm ts})}$ are the model parameters obtained from the  meta-knowledge $\omega^{\star}$ in ~\cref{eq:SP-meta-trn}, and  ${\cal D}_{\rm T}^{{\rm tr}\,(\tau_{\rm ts})}$ is the target training data of the unseen test task $\tau_{\rm ts}$.
+
+The above meta-learning procedure contrasts with conventional learning, formally given as,
+\begin{equation}
+    \theta^{\star} = \arg\min_{\theta}{\cal L}({\cal D};\theta, \omega)\label{eq:SP-conventional}
+\end{equation}
+since in ~\cref{eq:SM-meta-tst}, $\theta^{{\star}}$ benefits from the meta-knowledge $\omega^{\star}$. 
+
+Although the previous discussion (see ~\cref{eq:SP-meta-knowledge}, ~\cref{eq:SP-meta-trn}, and~\cref{eq:SM-meta-tst}) briefly describes the typical flow of the meta-learning framework when multiple tasks are involved, it does not address how precisely the meta-learning in~\cref{eq:SP-meta-trn} is solved. Such challenge is tackled by casting the meta-training step as a bi-level optimization problem~\cite{stackelberg1952theory}. This bi-level optimization refers to the  hierarchical optimization, where one optimization contains another optimization as a constraint [][]. 
+Such bi-level optimization can be expressed by   
+\begin{align}
+    \omega^{\star} &= \arg\min_{\omega} \sum_{\tau_{\rm tr} = 1}^{T} {\cal L}^{\rm meta} (\theta^{\star (\tau_{\rm tr})}(\omega), {\cal D}_{S}^{{\rm vl}{(\tau_{\rm tr})}  }) \label{eq:outer} \\
+    &{\rm s.t.}\;  \theta^{\star (\tau_{\rm tr})}(\omega) = \arg\min_{\theta} {\cal L}^{\rm task}(\theta(\omega), {\cal D}_{S}^{{\rm tr}  (\tau_{\rm tr})} ) \label{eq:inner}
+\end{align}
+where the terms ${\cal L}^{\rm task}$, ${\cal L}^{\rm meta}$ refer to the inner and outer objectives, respectively, (e.g., cross entropy) and 
+${\cal D}_{S}^{\rm tr(\tau_{\rm tr})}$,
+${\cal D}_{S}^{\rm vl(\tau_{\rm tr})}$ are the training and validation datasets, respectively, for the training task $\tau_{\rm tr}$.
+
+In~\cref{eq:inner} $\omega$ denotes the model's initial condition (e.g., meta-initialization). 
+The outer-level optimization in~\cref{eq:outer} updates $\omega$ such that the resulting  parametrized model  $\theta^{\star (\tau_{\rm tr})}(\omega)$ achieves good performance on the validation sets after task-specific training. 
+In our case, ${\cal L}^{\rm task}$ and ${\cal L}^{\rm meta}$ will be the same (i.e., CE). 
+
+Notice that ~\cref{eq:outer},~\cref{eq:inner} can be compactly described as ~\cref{eq:meta} in ~\cref{sec:method} of main paper:
+
+\begin{equation}
+    \omega^{{\star}} = \arg\min_{\omega} {\cal L}_{\rm outer} ({\cal L}_{\rm inner} (\theta(\omega), \mathcal{D}^{{\rm tr}(\tau_{\rm tr})}_{S}),\mathcal{D}^{{\rm vl}(\tau_{\rm tr})}_{S}),\label{eq:sp_meta}
+\end{equation}
+where  ${\cal L}_{\rm inner}$ corresponds to ${\cal L}^{\rm task}$ in~\cref{eq:inner} and ${\cal L}_{\rm outer}$ corresponds to ${\cal L}^{\rm meta}$ in~\cref{eq:outer}.
+
+The {\it meta-testing} phase follows the same procedure as in ~\cref{eq:outer},~\cref{eq:inner} above but replacing 
+${\cal D}_{S}^{\rm tr(\tau_{\rm tr})}$ by ${\cal D}_{T}^{\rm tr(\tau_{\rm ts})}$ and
+${\cal D}_{S}^{\rm vl(\tau_{\rm tr})}$ by ${\cal D}_{T}^{\rm ts(\tau_{\rm ts})}$. 
+\begin{align}
+    \omega^{\star} &= \arg\min_{\omega} {\cal L}^{\rm meta} (\theta^{\star (\tau_{\rm ts})}(\omega), {\cal D}_{T}^{{\rm ts}{(\tau_{\rm ts})}  }) \label{eq:ts_outer} \\
+    &{\rm s.t.}\;  \theta^{\star (\tau_{\rm ts})}(\omega) = \arg\min_{\theta} {\cal L}^{\rm task}(\theta,\omega, {\cal D}_{T}^{{\rm tr}  (\tau_{\rm ts})} ) \label{eq:ts_inner}
+\end{align}
+
+In our case, the {\it meta-testing} task $\tau_{\rm ts}$ will be our inference task.
+
+%Meta-learning is a bi-level optimization strategy characterized by having an inner and outer loop. Formally,
+%\begin{equation}
+%    \theta = \arg\min_{\theta} {\cal L}_{\rm outer} ({\cal L}_{\rm inner} (D^{\rm tr}_{S},\theta),D^{\rm val}_{S}),\label{eq:meta}
+%\end{equation}
+%where ${\cal L}_{\rm inner}$, ${\cal L}_{\rm inner}$ refer to the outer and inner objectives, and  $D^{\rm tr}_{S}$, $,D^{\rm val}_{S}$ are the training and validation source data.
+%In what follows, we reformulate the tasks described in~\cref{sec:Rel-Work} within the meta-learning framework defined by Eqs.~\eqref{eq:inner},~\eqref{eq:outer}. To accomplish this, we distinguish between two types of tasks: $(i)$ tasks used to acquire meta-knowledge, and
+%$(ii)$ 
+%tasks used to accomplish the ultimate %objective of classifying unlabeled target-domain data.
+%Tasks in the first category are sampled during the meta-training phase, i.e. $\tau_{\rm mtr}\in\{ {\rm }{\color{red}\rm UDA}, {\color{Emerald}\rm SSL}, {\color{blue}\rm CDAC} \}$, while tasks in the second category are sampled during the meta-testing phase, i.e. $\tau_{\rm mtst}\in\{ {\rm  UL_{\overline{D}_{T}}} \}$, where ${\rm UL_{\overline{D}_{T}}}$ denotes the unsupervised learning task on the unlabeled target-domain data.

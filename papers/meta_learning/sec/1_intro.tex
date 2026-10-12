@@ -20,37 +20,51 @@ Diffusion models have made high-quality image generation widely accessible~\cite
 
 % %%%%%%%%%% End Jacinto %%%%%%%%%% %
 
-SpiderMark builds on recent in-generation watermarking work for diffusion models~\cite{wen2023tree_ring,fernandez2023stable,yang2024gaussian,huang2024robin} and addresses several limitations of handcrafted frequency-domain detectors.
-It injects a structured spider-web pattern into the Fourier representation of the initial diffusion noise and trains a lightweight learned verifier to detect the recovered spectral signature.
+{\color{blue} Recent state-of-the-art methods, e.g. [ArXiv], builds on recent in-generation watermarking for diffusion models~\cite{wen2023tree_ring,fernandez2023stable,yang2024gaussian,huang2024robin}. Although it overcomes the limitations of handcrafted frequency-domain detectors and improves both the robustness over threshold-based detectors and ring-style frequency patterns, the training distribution is fixed by a manually chosen mixture of attacks and augmentations. When downstream conditions shift, the verifier must generalize from this fixed mixture. This requires that the verifier must be trained under a conventional supervised recipe.
+
+In this work we propose a novel methodology that aims to overcome the challenge above. Specifically, we address the watermarking by proposing a novel meta learning strategy with a novel task scheduler mechanism. In our proposal the  attacks are treated as a meta-tasks that are orchestrated by a novel  agentic task scheduler mechanism. 
+
+The proposed approach works as follows. During meta-training, the verifier first adapts on a {\it support set} sampled under a given downstream transformation and is then optimized using the corresponding {\it query set}. The key difference is that task exposure is not fixed. Concretely, an agentic AI scheduler first observes online meta-training signals,  summarizes the recent behavior of each attack task, and  proposes residual task-weight corrections that determine the next episode distribution. Our approach is thus twofold: $(i)$ the agentic scheduler improves how the verifier is exposed to downstream watermark verification tasks during meta-training, and $(ii)$ the verifier training is incorporated into a closed-loop process, i.e. attack episodes produce support/query losses, the agent interprets those signals, and the resulting task distribution changes the verifier's future training curriculum. Our approach is termed as as Agentic-Meta-Mark (AMM)}.
+
+
+%The rationale is simple: it first  injects a structured spider-web pattern into the Fourier representation of the initial diffusion noise, and trains a lightweight learned verifier to detect the recovered spectral signature. Specifically, the method is characterized of having two distinct phases: (i) watermark injection and watermarked Image generation, and (ii) verification phase [ArXiv]. In (i) a watermarked generated image $\tilde{x}_0$ is obtained from a pretrained diffusion model $\mathcal{G}(.)$ and a frequency-domain watermark pattern $W$. In  particular, a {\it spider} based pattern is used in the structure of $W$, as it as several key advantages (i.e., directional robustness, spatial redundancy and frequency balance). The second stage, (ii) uses the generated watermarked image $\widetilde{x}_o$ and the unwatermarked image $x_0$, and a verification $f_{\theta}$ is performed (see Suppl. Mat. for the algorithms for each of the phases).\\  
+\sout{
+SpiderMark builds on recent in-generation watermarking work for diffusion
+models~\cite{wen2023tree_ring,fernandez2023stable,yang2024gaussian,huang2024robin} and addresses several limitations of handcrafted frequency-domain detectors.
 The spider-web pattern combines radial and angular components, while the verifier fuses deep spectral features with explicit similarity cues such as PSNR and $\ell_1$ distance.
 This combination improves robustness over threshold-based detectors and ring-style frequency patterns.
 Yet the verifier is still trained under a conventional supervised recipe: the training distribution is fixed by a manually chosen mixture of attacks and augmentations.
-When downstream conditions shift, the verifier must generalize from this fixed mixture.
+When downstream conditions shift, the verifier must generalize from this fixed mixture.}
 
+\sout{
 This work studies a complementary question:
 \emph{can an agentic scheduler improve how the verifier is exposed to downstream watermark verification tasks during meta-training?}
 We treat each attack condition as a task and construct episodic verifier updates from support and query examples.
 During meta-training, the verifier first adapts on a support set sampled under one downstream transformation and is then optimized using the corresponding query set.
 The key difference is that task exposure is not fixed.
 An agentic AI scheduler observes online meta-training signals, summarizes the recent behavior of each attack task, and proposes residual task-weight corrections that determine the next episode distribution.
-This turns verifier training into a closed-loop process: attack episodes produce support/query losses, the agent interprets those signals, and the resulting task distribution changes the verifier's future training curriculum.
+This turns verifier training into a closed-loop process: attack episodes produce support/query losses, the agent interprets those signals, and the resulting task distribution changes the verifier's future training curriculum. }
 
+\sout{
 The resulting framework, \emph{Agentic MetaSpiderMark}, preserves the original SpiderMark injection mechanism while replacing static or manually scheduled verifier training with agent-guided attack-task scheduling.
 The central claim is specific and testable: for watermark deployment that prioritizes correct binary decisions at a fixed operating threshold, an agentic scheduler can provide the strongest accuracy-first verifier by deciding which downstream attacks should receive training attention.
 This is different from claiming a new watermark pattern, a new diffusion generator, or a general-purpose meta-learning algorithm.
-It is an extension of SpiderMark focused on agentic control of verifier training.
+It is an extension of SpiderMark focused on agentic control of verifier training.}
 
+{\color{blue}
+Our contributions are as follows:
+\begin{itemize}
+    \item We formulate the  watermark verifier training as closed-loop episodic meta-learning: support/query attack episodes update the verifier, while query feedback updates the scheduler's task distribution.
+    
+    \item For task scheduling, we introduce an agentic AI task scheduler for robust diffusion watermark verification, where an AI controller monitors online training signals and adaptively reweights downstream attack tasks.
+    \item We define a scheduler benchmark that compares the agentic controller against uniform, UCB bandit [], ATS-style [], BASS-style [], and Adaptive Sampler-style task scheduling [] under matched attack episodes and compute budgets. {\color{red} PLEASE PROVIDE THE REFERENCES FOR THESE WORKS}
+    \item We report a full 1,000-image COCO test-set evaluation, establishing the proposed Agentic AI Scheduler as the top-ranked accuracy-first scheduler, obtaining the highest accuracy across eight attacked conditions, and reaching 89.15\% compared with 88.85\% (BASS-style scheduling), 88.84\% (ATS-style scheduling), and 88.41\% (uniform sampling)
+\end{itemize}
+}
+\sout{
 Our controlled benchmark compares six schedulers under matched attack episodes, compute budgets, downstream batches, and checkpoint-selection rules.
 Because watermark verification ultimately produces a binary decision, we treat fixed-threshold accuracy as the primary deployment metric and AUROC as a complementary threshold-free diagnostic.
 On the unseen 1,000-image COCO test set, Agentic MetaSpiderMark obtains the highest mean fixed-threshold accuracy across eight attacked conditions, reaching 89.15\% compared with 88.85\% for BASS-style scheduling, 88.84\% for ATS-style scheduling, and 88.41\% for uniform sampling.
 No competing scheduler achieves a higher mean accuracy, and paired bootstrapping shows statistically positive advantages over uniform sampling, Adaptive Sampler, and Bandit-UCB.
 The smaller margins over BASS and ATS remain unresolved, so we characterize Agentic MetaSpiderMark as the best accuracy-first scheduler in this controlled benchmark rather than claiming dominance under every attack or metric.
-
-The contributions are as follows:
-\begin{itemize}
-    \item We introduce an agentic AI task scheduler for robust diffusion watermark verification, where an AI controller monitors online training signals and adaptively reweights downstream attack tasks.
-    \item We formulate SpiderMark verifier training as closed-loop episodic meta-learning: support/query attack episodes update the verifier, while query feedback updates the scheduler's task distribution.
-    \item We preserve the original SpiderMark watermark pattern and diffusion generator, making the proposed scheduler a model-agnostic verifier-side training mechanism.
-    \item We define a scheduler benchmark that compares the agentic controller against uniform, UCB bandit, ATS-style, BASS-style, and Adaptive Sampler-style task scheduling under matched attack episodes and compute budgets.
-    \item We report a full 1,000-image COCO test-set evaluation with paired bootstrap confidence intervals, establishing Agentic MetaSpiderMark as the top-ranked accuracy-first scheduler among six matched methods, with statistically positive gains over three of five competitors and competitive AUROC.
-\end{itemize}
+}
